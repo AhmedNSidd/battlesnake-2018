@@ -1,79 +1,40 @@
-from pathfinding import a_star, node_counting
+from pathfinding import a_star
 from board import *
 
 class SelfSnake():
     def get_action(self, board):
-        # get a random food
-        # get a path to that food
-        # get an action to follow that path
-
         '''
-        your own tail
-        enemy's tail
-        smaller snakes head
+        If health (< 30) or length is low:
+        1st priority: Food (A*)
+        2nd priority: Tail (A*)
+        3rd priority: Enemy's tail (A*)
+        4th priority: At this point, i'm probably trapped, so stall until an exit opens. (DFS + Reverse-floodfill)
+
+        If health and length is fine:
+        1st priority: Tail (A*)
+        2nd priority: Enemy's tail (A*)
+        3rd priority: At this point, i'm probably trapped, so stall until an exit opens. (DFS + Reverse-floodfill)
+
+        How to stall:
+        1 - Keep using DFS to find a path to snakes tail starting from the end until algorithm returns true
+        2 - Use that node as the destination for reverse-floodfill algorithm
+            a) Create a grid of WxH with -1 everywhere
+            b) set i = 0
+            c) add the destination to the grid as i++
+            d) get_neighbours to mark the neighbours with i++
+            * How to get neighbours: make sure a neighbour is within the height and width, is not a tail or a head of snake and is -1
+            e) mark the neighbours of neighbours with i++ (check that the neighbours of neighbours are -1, if not, don't mark them.)
+            f) keep marking until all valid neighbours are marked.
+        3- from the start (snake's head), get valid neighbours of start, compare neighbour's values, whichever one is bigger, that's your destination
         '''
-        health = board.my_snake.health
-        length = board.my_snake.length
-
-        distance_to_each_food = []
-
-        for food in board.foods:
-            node = (get_manhattan_distance(board.my_snake.get_head(), food), food)
-            distance_to_each_food.append(node)
-
-        distance_to_each_food.sort()
-        for my_distance, to_food in distance_to_each_food:
-            cost_of_food, path_to_food = a_star(board, board.my_snake.get_head(), to_food)
-            distances = []
-
-            for snake in board.other_snakes:
-                distances.append(get_manhattan_distance(snake.get_head(), to_food))
-
-            for distance in distances:
-
-                if health >= 99:
-                    if path_to_food == None:
-                        possible_surroundings = board.get_surrounding_coords()
-                        possible_routes = []
-                        for possible_coord in possible_surroundings:
-                            possible_routes.append((node_counting(possible_coord), possible_coords))
-
-                        possible_routes.sort()
-                        i, best_possible_coord = possible_routes[-1]
-                        return self.translate(board.my_snake.get_head(), best_possible_coord)
-
-                    else:
-                        return self.translate(board.my_snake.get_head(), path_to_food[1])
-
-                elif length <= 3 or health <= 75:
-                    if path_to_food == None:
-                        possible_surroundings = board.get_surrounding_coords()
-                        possible_routes = []
-                        for possible_coord in possible_surroundings:
-                            possible_routes.append((node_counting(possible_coord), possible_coords))
-
-                        possible_routes.sort()
-                        i, best_possible_coord = possible_routes[-1]
-                        return self.translate(board.my_snake.get_head(), best_possible_coord)
-
-                    else:
-                        return self.translate(board.my_snake.get_head(), path_to_food[1])
-
-                elif distance >= my_distance:
-                    return self.translate(board.my_snake.get_head(), path_to_food[1])
-
-                else:
-                    if path_to_food == None:
-                        possible_surroundings = board.get_surrounding_coords()
-                        possible_routes = []
-                        for possible_coord in possible_surroundings:
-                            possible_routes.append((node_counting(possible_coord), possible_coords))
-
-                        possible_routes.sort()
-                        i, best_possible_coord = possible_routes[-1]
-                        return self.translate(board.my_snake.get_head(), best_possible_coord)
-                    else:
-                        return self.translate(board.my_snake.get_head(), path_to_tail[1])
+        food = board.foods[0]
+        cost_of_food, path_to_food = a_star(board, board.my_snake.get_head(), food)
+        if cost_of_food == None:
+            x, y = board.my_snake.coordinates[-1]
+            board.grid[y][x] = SNAKE_TAIL_MARKER
+            cost_of_tail, path_to_tail = a_star(board, board.my_snake.get_head(), board.my_snake.coordinates[-1])
+            return self.translate(board.my_snake.get_head(), path_to_tail[1])
+        return self.translate(board.my_snake.get_head(), path_to_food[1])
 
     def translate(self, self_coords, target_coords):
         self_x, self_y = self_coords
@@ -88,17 +49,3 @@ class SelfSnake():
                 return "left"
             elif self_x < target_x:
                 return "right"
-
-
-
-
-'''
-if path == None:
-    i = -1
-    while path == None:
-        i = i - 1
-        cost, path = a_star(board, board.self_snake.get_head(), board.self_snake.coordinates[i])
-
-
-    return self.translate(board.get_head(), path[1])
-    '''
