@@ -8,7 +8,7 @@ class Board(object):
         self.height = data['height'] # set the height of game board
         # create a 2d array which represents the game board
         self.grid = [[EMPTY_SPACE_MAKERS for x in range(0, self.width)] for y in range(0, self.height)]
-        self.foods = self._parse_data_list(data['food']['data'])
+        self.foods = self._parse_data_list(data['food']['data']) # a list of tuple coordinates of all foods.
         self.my_snake = self._parse_snake_object(data['you'])
         # Creates a list of other snakes (enemies)
         self.other_snakes = [self._parse_snake_object(snake) for snake in data['snakes']['data'] if self.my_snake.id != snake['id']]
@@ -35,8 +35,12 @@ class Board(object):
         x, y = self.my_snake.coordinates[0]
         self.grid[y][x] = SNAKE_HEAD_MARKER
 
+        x, y = self.my_snake.coordinates[-1]
+        self.grid[y][x] = SNAKE_TAIL_MARKER
+
         # Marking other snakes
         for other_snake in self.other_snakes:
+            #currently registers enemy tails as a wall.
             for x, y in other_snake.coordinates[1:]:
                 self.grid[y][x] = SNAKE_BODY_MARKER
 
@@ -58,7 +62,7 @@ class Board(object):
         neighbours = [(xcoord + 1, ycoord), (xcoord - 1, ycoord), (xcoord, ycoord + 1), (xcoord, ycoord - 1)]
         return [(i, j) for i, j in neighbours if self.is_valid_coordinate(i, j)]
 
-    # If the x and y coords are in the board, and the coords don't contain any snake's tail or head, return true. else, false
+    # If the x and y coords are in the board, and the coords don't contain any snake's body or head, return true. else, false
     def is_valid_coordinate(self, xcoord, ycoord):
         return -1 < xcoord < self.width and -1 < ycoord < self.height and self.grid[ycoord][xcoord] != SNAKE_BODY_MARKER and self.grid[ycoord][xcoord] != SNAKE_HEAD_MARKER
 

@@ -1,5 +1,6 @@
-from pathfinding import a_star
+from pathfinding import a_star, bfs
 from board import *
+from heapq import heappush, heappop
 
 class SelfSnake():
     def get_action(self, board):
@@ -27,14 +28,29 @@ class SelfSnake():
             f) keep marking until all valid neighbours are marked.
         3- from the start (snake's head), get valid neighbours of start, compare neighbour's values, whichever one is bigger, that's your destination
         '''
-        food = board.foods[0]
-        cost_of_food, path_to_food = a_star(board, board.my_snake.get_head(), food)
-        if cost_of_food == None:
-            x, y = board.my_snake.coordinates[-1]
-            board.grid[y][x] = SNAKE_TAIL_MARKER
-            cost_of_tail, path_to_tail = a_star(board, board.my_snake.get_head(), board.my_snake.coordinates[-1])
-            return self.translate(board.my_snake.get_head(), path_to_tail[1])
-        return self.translate(board.my_snake.get_head(), path_to_food[1])
+
+        foods = board.foods
+        cost_and_path_to_all_foods = []
+        for food in foods:
+            print "Calculating cost to a food..."
+            if (bfs(board, board.my_snake.get_head(), food)):
+                heappush(cost_and_path_to_all_foods, a_star(board, board.my_snake.get_head(), food))
+        if board.my_snake.health > 75 and board.my_snake.length > 5:
+            print "Calculating cost to my tail..."
+            if (bfs(board, board.my_snake.get_head(), board.my_snake.coordinates[-1])):
+                cost_of_tail, path_to_tail = a_star(board, board.my_snake.get_head(), board.my_snake.coordinates[-1])
+                return self.translate(board.my_snake.get_head(), path_to_tail[1])
+            else:
+                cost_of_food, path_to_food = heappop(cost_and_path_to_all_foods)
+                return self.translate(board.my_snake.get_head(), path_to_food[1])
+        else:
+            try:
+                cost_of_food, path_to_food = heappop(cost_and_path_to_all_foods)
+                return self.translate(board.my_snake.get_head(), path_to_food[1])
+            except IndexError:
+                cost_of_tail, path_to_tail = a_star(board, board.my_snake.get_head(), board.my_snake.coordinates[-1])
+                return self.translate(board.my_snake.get_head(), path_to_tail[1])
+
 
     def translate(self, self_coords, target_coords):
         self_x, self_y = self_coords
