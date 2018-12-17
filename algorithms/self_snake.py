@@ -17,7 +17,7 @@ class SelfSnake():
         3rd priority: At this point, i'm probably trapped, so stall until an exit opens. (DFS + Reverse-floodfill)
 
         How to stall:
-        1 - Keep using DFS to find a path to snakes tail starting from the end until algorithm returns true
+        1 - Keep using BFS to find a path to snakes tail starting from the end until algorithm returns true
         2 - Use that node as the destination for reverse-floodfill algorithm
             a) Create a grid of WxH with -1 everywhere
             b) set i = 0

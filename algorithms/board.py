@@ -36,7 +36,11 @@ class Board(object):
         self.grid[y][x] = SNAKE_HEAD_MARKER
 
         x, y = self.my_snake.coordinates[-1]
-        self.grid[y][x] = SNAKE_TAIL_MARKER
+        if self.my_snake.health == 100:
+            self.grid[y][x] = SNAKE_BODY_MARKER
+        else:
+            self.grid[y][x] = SNAKE_TAIL_MARKER
+
 
         # Marking other snakes
         for other_snake in self.other_snakes:
