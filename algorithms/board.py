@@ -68,7 +68,22 @@ class Board(object):
 
     # If the x and y coords are in the board, and the coords don't contain any snake's body or head, return true. else, false
     def is_valid_coordinate(self, xcoord, ycoord):
-        return -1 < xcoord < self.width and -1 < ycoord < self.height and self.grid[ycoord][xcoord] != SNAKE_BODY_MARKER and self.grid[ycoord][xcoord] != SNAKE_HEAD_MARKER
+        node_in_board = -1 < xcoord < self.width and -1 < ycoord < self.height # a boolean telling us whether our node is in the board.
+        if not node_in_board:
+            return False
+        node_emptiness = self.grid[ycoord][xcoord] != SNAKE_BODY_MARKER and self.grid[ycoord][xcoord] != SNAKE_HEAD_MARKER # boolean telling us if the node is empty
+        distance_to_node = get_manhattan_distance(self.my_snake.get_head(), (xcoord, ycoord))
+        if not node_emptiness: # if the node isn't empty, check if it's going to be empty.
+            if (xcoord, ycoord) in self.my_snake.coordinates:
+                time_to_disapper = 1 if self.my_snake.health == 100 else 0
+                for my_snakes_node in reversed(self.my_snake.coordinates[1:]):
+                    time_to_disapper = time_to_disapper + 1
+                    if my_snakes_node == (xcoord, ycoord):
+                        break
+                if time_to_disapper <= distance_to_node:
+                    node_emptiness = True
+
+        return node_in_board and node_emptiness
 
     def get_cost(self, node):
         cost = 1

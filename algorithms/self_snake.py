@@ -1,6 +1,7 @@
 from pathfinding import a_star, bfs
 from board import *
 from heapq import heappush, heappop
+import time
 
 class SelfSnake():
     def get_action(self, board):
@@ -14,7 +15,7 @@ class SelfSnake():
         If health and length is fine:
         1st priority: Tail (A*)
         2nd priority: Enemy's tail (A*)
-        3rd priority: At this point, i'm probably trapped, so stall until an exit opens. (DFS + Reverse-floodfill)
+        3rd priority: At this point, i'm probably trapped, so stall until an exit opens. (DFS + Floodfill)
 
         How to stall:
         1 - Keep using BFS to find a path to snakes tail starting from the end until algorithm returns true
@@ -28,29 +29,40 @@ class SelfSnake():
             f) keep marking until all valid neighbours are marked.
         3- from the start (snake's head), get valid neighbours of start, compare neighbour's values, whichever one is bigger, that's your destination
         '''
-
-        foods = board.foods
-        cost_and_path_to_all_foods = []
-        for food in foods:
-            print "Calculating cost to a food..."
-            if (bfs(board, board.my_snake.get_head(), food)):
-                heappush(cost_and_path_to_all_foods, a_star(board, board.my_snake.get_head(), food))
         if board.my_snake.health > 75 and board.my_snake.length > 5:
-            print "Calculating cost to my tail..."
             if (bfs(board, board.my_snake.get_head(), board.my_snake.coordinates[-1])):
                 cost_of_tail, path_to_tail = a_star(board, board.my_snake.get_head(), board.my_snake.coordinates[-1])
                 return self.translate(board.my_snake.get_head(), path_to_tail[1])
             else:
-                cost_of_food, path_to_food = heappop(cost_and_path_to_all_foods)
-                return self.translate(board.my_snake.get_head(), path_to_food[1])
-        else:
-            try:
-                cost_of_food, path_to_food = heappop(cost_and_path_to_all_foods)
-                return self.translate(board.my_snake.get_head(), path_to_food[1])
-            except IndexError:
-                cost_of_tail, path_to_tail = a_star(board, board.my_snake.get_head(), board.my_snake.coordinates[-1])
-                return self.translate(board.my_snake.get_head(), path_to_tail[1])
+                foods = board.foods
+                cost_and_path_to_all_foods = []
+                available_food = False
 
+                for food in foods:
+                    heappush(cost_and_path_to_all_foods, (get_manhattan_distance(board.my_snake.get_head(), food), food))
+
+                while cost_and_path_to_all_foods:
+                    food = heappop(cost_and_path_to_all_foods)
+                    if (bfs(board, board.my_snake.get_head(), food)):
+                        available_food = True
+                        cost_of_food, path_to_food = a_star(board, board.my_snake.get_head(), food)
+                        return self.translate(board.my_snake.get_head(), path_to_food[1])
+        else:
+            foods = board.foods
+            cost_and_path_to_all_foods = []
+            available_food = False
+
+            for food in foods:
+                heappush(cost_and_path_to_all_foods, (get_manhattan_distance(board.my_snake.get_head(), food), food))
+
+            while cost_and_path_to_all_foods:
+                distance, food_coordinates  = heappop(cost_and_path_to_all_foods)
+                if (bfs(board, board.my_snake.get_head(), food_coordinates)):
+                    available_food = True
+                    cost_of_food, path_to_food = a_star(board, board.my_snake.get_head(), food_coordinates)
+                    return self.translate(board.my_snake.get_head(), path_to_food[1])
+            cost_of_tail, path_to_tail = a_star(board, board.my_snake.get_head(), board.my_snake.coordinates[-1])
+            return self.translate(board.my_snake.get_head(), path_to_tail[1])
 
     def translate(self, self_coords, target_coords):
         self_x, self_y = self_coords
