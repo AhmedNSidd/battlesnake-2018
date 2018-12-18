@@ -1,3 +1,0 @@
-bottle==0.12.9
-gevent==1.0.2
-greenlet==0.4.9
