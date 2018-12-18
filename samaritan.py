@@ -2,10 +2,7 @@ import bottle
 import os
 import random
 from algorithms.board import Board
-from algorithms.self_snake import SelfSnake
 import time
-
-my_snake = SelfSnake()
 
 @bottle.route('/')
 def static():
@@ -33,11 +30,11 @@ def move():
     data = bottle.request.json
     environment = Board(data)
     start = time.time()
-    action = my_snake.get_action(environment)
-    print (time.time() - start) * 1000, "ms" 
+    objective, action = environment.my_snake.get_action(environment)
+    print (time.time() - start) * 1000, "ms"
     return {
         'move': action,
-        'taunt': "Calculated."
+        'taunt': "Can you hear me?"
     }
 
 @bottle.post('/end')

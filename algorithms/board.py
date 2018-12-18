@@ -1,9 +1,10 @@
-from snake import Snake
+import snake
 from constants import *
 from utils import get_manhattan_distance
 
 class Board(object):
     def __init__(self, data):
+        self.data = data
         self.width = data['width'] # set the width of game board
         self.height = data['height'] # set the height of game board
         # create a 2d array which represents the game board
@@ -25,19 +26,19 @@ class Board(object):
         coords = self._parse_data_list(snake_object['body']['data'])
         length = snake_object['length']
         health = snake_object['health']
-        return Snake(id, coords, health, length)
+        return snake.Snake(id, coords, health, length)
 
     def _mark_grid(self):
         # Marking my own snake.
         for x, y in self.my_snake.coordinates[1:-1]:
-            self.grid[y][x] = SNAKE_BODY_MARKER
+            self.grid[y][x] = SAMARITAN_BODY_MARKER
 
         x, y = self.my_snake.coordinates[0]
-        self.grid[y][x] = SNAKE_HEAD_MARKER
+        self.grid[y][x] = SAMARITAN_HEAD_MARKER
 
         x, y = self.my_snake.coordinates[-1]
-        if self.my_snake.health == 100:
-            self.grid[y][x] = SNAKE_BODY_MARKER
+        if self.my_snake.health == 100 or self.my_snake.length <=3:
+            self.grid[y][x] = SAMARITAN_BODY_MARKER
         else:
             self.grid[y][x] = SNAKE_TAIL_MARKER
 
@@ -45,11 +46,17 @@ class Board(object):
         # Marking other snakes
         for other_snake in self.other_snakes:
             #currently registers enemy tails as a wall.
-            for x, y in other_snake.coordinates[1:]:
-                self.grid[y][x] = SNAKE_BODY_MARKER
+            for x, y in other_snake.coordinates[1:-1]:
+                self.grid[y][x] = ENEMY_SNAKE_BODY_MARKER
 
             x, y = other_snake.coordinates[0]
-            self.grid[y][x] = SNAKE_HEAD_MARKER
+            self.grid[y][x] = ENEMY_SNAKE_HEAD_MARKER
+
+            x, y = other_snake.coordinates[-1]
+            if other_snake.health == 100 or other_snake.length <= 3:
+                self.grid[y][x] = SAMARITAN_BODY_MARKER
+            else:
+                self.grid[y][x] = SNAKE_TAIL_MARKER
 
         # Marking foods
         for x, y in self.foods:
@@ -60,6 +67,8 @@ class Board(object):
             for point in row:
                 print point,
             print
+        print
+        print
 
     def get_neighbours(self, node):
         xcoord, ycoord = node
@@ -71,7 +80,7 @@ class Board(object):
         node_in_board = -1 < xcoord < self.width and -1 < ycoord < self.height # a boolean telling us whether our node is in the board.
         if not node_in_board:
             return False
-        node_emptiness = self.grid[ycoord][xcoord] != SNAKE_BODY_MARKER and self.grid[ycoord][xcoord] != SNAKE_HEAD_MARKER # boolean telling us if the node is empty
+        node_emptiness = (self.grid[ycoord][xcoord] != SAMARITAN_BODY_MARKER and self.grid[ycoord][xcoord] != ENEMY_SNAKE_BODY_MARKER) and (self.grid[ycoord][xcoord] != SAMARITAN_HEAD_MARKER and self.grid[ycoord][xcoord] != ENEMY_SNAKE_HEAD_MARKER) # boolean telling us if the node is empty
         distance_to_node = get_manhattan_distance(self.my_snake.get_head(), (xcoord, ycoord))
         if not node_emptiness: # if the node isn't empty, check if it's going to be empty.
             if (xcoord, ycoord) in self.my_snake.coordinates:
@@ -87,4 +96,20 @@ class Board(object):
 
     def get_cost(self, node):
         cost = 1
+        xcoord, ycoord = node
+        if xcoord == 19 or ycoord == 19 or xcoord == 0 or ycoord == 0:
+            cost+=3
+            if (xcoord == 19 and ycoord == 19) or (xcoord == 19 and ycoord == 0) or (xcoord == 0 and ycoord == 19) or (xcoord == 0 and ycoord == 0):
+                cost+=5
+            else:
+                # not a diagonal node
+                if xcoord == 19 and (self.grid[ycoord][xcoord-1] == ENEMY_SNAKE_HEAD_MARKER or self.grid[ycoord][xcoord-1] == ENEMY_SNAKE_BODY_MARKER):
+                    cost += 10 # maybe change this and others to 999?
+                elif ycoord == 19 and (self.grid[ycoord-1][xcoord] == ENEMY_SNAKE_HEAD_MARKER or self.grid[ycoord-1][xcoord] == ENEMY_SNAKE_BODY_MARKER):
+                    cost += 10
+                elif xcoord == 0 and (self.grid[ycoord][xcoord+1] == ENEMY_SNAKE_HEAD_MARKER or self.grid[ycoord][xcoord+1] == ENEMY_SNAKE_BODY_MARKER):
+                    cost += 10
+                elif ycoord == 0 and (self.grid[ycoord+1][xcoord] == ENEMY_SNAKE_HEAD_MARKER or self.grid[ycoord+1][xcoord] == ENEMY_SNAKE_BODY_MARKER):
+                    cost += 10
+        # steps_to_food = get_manhattan_distance(self.my_snake.get_head(), node)
         return cost
