@@ -34,7 +34,7 @@ def move():
     environment = Board(data)
     start = time.time()
     action = my_snake.get_action(environment)
-    print (time.time() - start) * 100, "seconds" 
+    print (time.time() - start) * 1000, "ms" 
     return {
         'move': action,
         'taunt': "Calculated."
