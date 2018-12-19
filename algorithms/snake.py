@@ -1,115 +1,33 @@
-from pathfinding import a_star, bfs
-import board as NewBoard
-from heapq import heappush, heappop
-
 class Snake(object):
-    def __init__(self, s_id, list_of_coords, health, length): # e.g list_of_coords = [(2,3), (3,4), etc.]
+    '''This snake class is used to create snake objects to store basic info on
+    them. For Samaritan, we can also get an action based on a given board.
+    '''
+
+    def __init__(self, s_id, list_of_coords, health, length):
+        '''Initializes snake object with important instance variables.
+        '''
         self.id = s_id
         self.coordinates = list_of_coords
         self.health = health
         self.length = length
 
     def get_head(self):
+        '''Returns head of Snake object
+        '''
         return self.coordinates[0]
 
     def get_tail(self):
+        '''Returns tail of Snake object
+        '''
         return self.coordinates[-1]
 
-    def get_action(self, board):
-        if self.health > 70 and self.length > 3:
-            #enemy_snake_in_corner = check_for_corners(board)
-            existing_path_to_tail = self.find_path_to_my_tail(board)
-
-            if existing_path_to_tail:
-                return existing_path_to_tail
-            else:
-                existing_path_to_food = self.find_path_to_food(board)
-                if existing_path_to_food:
-                    return existing_path_to_food
-                else:
-                    return ('Death', 'left')
-        else:
-            existing_path_to_food = self.find_path_to_food(board)
-            if existing_path_to_food:
-                return existing_path_to_food
-            else:
-                existing_path_to_tail = self.find_path_to_my_tail(board)
-                if existing_path_to_tail:
-                    return existing_path_to_tail
-                else:
-                    return ('Death', 'left')
-
-    def find_path_to_food(self, board):
-        foods = board.foods
-        cost_and_path_to_all_foods = []
-
-        for food in foods:
-            heappush(cost_and_path_to_all_foods, a_star(board, self.get_head(), food))
-
-        if not cost_and_path_to_all_foods:
-            return False
-        else:
-            while cost_and_path_to_all_foods:
-                cost, path_to_food  = heappop(cost_and_path_to_all_foods)
-                if not cost == None:
-                    data_for_new_board = board.data #remove food from new board and change my snake coords
-                    for food in data_for_new_board['food']['data'][:]:
-                        if (food['x'], food['y']) == path_to_food[-1]:
-                            data_for_new_board['food']['data'].remove(food)
-                            break
-                    steps_to_food = len(path_to_food) - 1
-                    data_for_new_board['you']['health'] = 100
-                    data_for_new_board['you']['length'] = self.length + 1
-                    my_snake_coords = data_for_new_board['you']['body']['data']
-                    new_snake_coords = []
-                    if self.length <= steps_to_food: # the snake is smaller than the steps to get to the food. hence use the path to food.
-                        for x in range(0, self.length):
-                            xcoord, ycoord = path_to_food[-1-x]
-                            new_snake_coords.append({
-                              "object": "point",
-                              "x": xcoord,
-                              "y": ycoord
-                            })
-                    else:
-                        for x in range(0, steps_to_food):
-                            my_snake_coords.pop()
-                        for xcoord, ycoord in path_to_food[1:]:
-                            my_snake_coords.insert(0, {
-                              "object": "point",
-                              "x": xcoord,
-                              "y": ycoord
-                            })
-                        new_snake_coords = my_snake_coords
-                    data_for_new_board['you']['body']['data'] = new_snake_coords
-                    board_after_samaritan_eats = NewBoard.Board(data_for_new_board)
-                    objective, action = board_after_samaritan_eats.my_snake.get_action(board_after_samaritan_eats)
-                    if objective == 'Death':
-                        return False
-                    else:
-                        return ('Food', translate(self.get_head(), path_to_food[1]))
-
-    def find_path_to_my_tail(self, board):
-        if (bfs(board, self.get_head(), self.get_tail())):
-            cost_of_tail, path_to_tail = a_star(board, self.get_head(), self.get_tail())
-            return ('My Tail', translate(self.get_head(), path_to_tail[1]))
-        else:
-            return False
-
-def translate(self_coords, target_coords):
-    self_x, self_y = self_coords
-    target_x, target_y = target_coords
-    if self_x == target_x:
-        if self_y > target_y:
-            return "up"
-        elif self_y < target_y:
-            return "down"
-    elif self_y == target_y:
-        if self_x > target_x:
-            return "left"
-        elif self_x < target_x:
-            return "right"
-
-
+    def is_tail_safe(self):
+        '''
+        If the coordinates of the last two indices of the snake are the same,
+        that means that the snake is still growing out of his tail and hence,
+        the tail is not a safe node.
+        '''
+        return self.coordinates[-1] != self.coordinates[-2]
 
 
 

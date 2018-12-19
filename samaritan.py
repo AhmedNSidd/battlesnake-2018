@@ -1,21 +1,31 @@
 import bottle
 import os
-import random
 from algorithms.board import Board
 import time
 
+
 @bottle.route('/')
 def static():
-    return "the server is running"
+    '''
+    When someone does a get request on the application, it's going to say
+    that it's running.
+    '''
+    return "<!DOCTYPE html><html><body><style>h1, h3 {color: red;font-family:"\
+    "monospace;}</style><h1>Samaritan is running...</h1><h3>A snake created"\
+    " by Ahmed Siddiqui and Jordan Kirchner</h3></body></html>"
+
 
 @bottle.route('/static/<path:path>')
 def static(path):
     return bottle.static_file(path, root='static/')
 
+
 @bottle.post('/start')
 def start():
-    data = bottle.request.json
-
+    '''
+    When a game starts, this endpoint is called and it gives the customization
+    information for Samaritan.
+    '''
     return {
         "color": "#FF0000",
         "secondary_color": "#00FF00",
@@ -25,23 +35,32 @@ def start():
         "tail_type": "pixel"
         }
 
+
 @bottle.post('/move')
 def move():
+    '''
+    When a game has started and the game server wants to know which direction
+    I want to move in, this endpoint is hit as a POST request with data telling
+    us about the game state (what the board looks like). We then figure out
+    what move and taunt we want to return.
+    '''
+    start = time.time()
     data = bottle.request.json
     environment = Board(data)
-    start = time.time()
-    objective, action = environment.my_snake.get_action(environment)
+    objective, action = environment.get_action()
     print (time.time() - start) * 1000, "ms"
     return {
         'move': action,
         'taunt': "Can you hear me?"
-    }
+        }
+
 
 @bottle.post('/end')
 def end():
+    '''This endpoint is hit when the game has ended.
+    '''
     pass
 
-# Expose WSGI app (so gunicorn can find it)
 
 application = bottle.default_app()
 
