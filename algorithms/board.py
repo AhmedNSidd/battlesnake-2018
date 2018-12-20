@@ -2,7 +2,7 @@ import snake
 from constants import *
 from utils import get_manhattan_distance, translate
 from heapq import heappush, heappop
-from pathfinding import a_star, bfs
+from graph_algorithms import a_star, bfs, stall
 
 
 class Board(object):
@@ -90,6 +90,14 @@ class Board(object):
         '''A method that returns all snake objects on the board.
         '''
         return self.other_snakes + [self.samaritan]
+
+    def is_samaritan_biggest(self):
+        '''Returns a boolean telling us whether samaritan is the biggest snake
+        on the board.'''
+        for snake in self.other_snakes:
+            if snake.length >= self.samaritan.length:
+                return False
+        return True
 
     def get_neighbours(self, node, snake, distance_to_node=None,
                        attacking=False):
@@ -194,57 +202,60 @@ class Board(object):
                 ]
         for neighbour in neighbours:
             xcoord, ycoord = neighbour
+            if (-1 < xcoord < self.width and -1 < ycoord < self.height):
+                if self.grid[ycoord][xcoord] == ENEMY_SNAKE_HEAD_MARKER:
+                    for snake in self.other_snakes:
+                        if snake.coordinates[0] == neighbour:
+                            if snake.length >= self.samaritan.length:
+                                cost += 999
+                            else:
+                                cost -= 2 # questionable cost assignment?
 
-            if ((-1 < xcoord < self.width and -1 < ycoord < self.height)
-                and self.grid[ycoord][xcoord] == ENEMY_SNAKE_HEAD_MARKER):
-                for snake in self.other_snakes:
-                    if snake.coordinates[0] == neighbour:
-                        if snake.length >= self.samaritan.length:
-                            cost += 999
-                        else:
-                            cost -= 2 # questionable cost assignment?
-
+        neighbours = self.get_neighbours(node, self.samaritan)
+        if len(neighbours) == 0:
+            cost += 999
+        elif len(neighbours) == 1:
+            cost += 10
+        elif len(neighbours) == 2:
+            cost += 5
         return cost
 
     def get_action(self):
-        if self.samaritan.health > 70 and self.samaritan.length > 15:
-            # attacking_info = self.attack_enemy()
-            # if attacking_info:
-            #     return attacking_info
-            # else:
-            cornering_info = self.cornering_enemies()
-            if cornering_info:
-                return cornering_info
-            else:
-                existing_path_to_tail = self.find_path_to_my_tail()
-
-                if existing_path_to_tail:
-                    return existing_path_to_tail
-                else:
-                    existing_path_to_food = self.find_path_to_food()
-                    if existing_path_to_food:
-                        return existing_path_to_food
-                    else:
-                        return ('Death', 'left')
-        else:
-            # print "Cornering"
-            cornering_info = self.cornering_enemies()
-            if cornering_info:
-                return cornering_info
-            else:
-                # print "To Food"
-                existing_path_to_food = self.find_path_to_food()
-                if existing_path_to_food:
-                    return existing_path_to_food
-                else:
-                    # print "To Tail"
-                    existing_path_to_tail = self.find_path_to_my_tail()
-                    if existing_path_to_tail:
-                        return existing_path_to_tail
-                    else:
-                        # print "To Death"
-                        return ('Death', 'left')
-
+        '''
+        Priorities:
+        - Need to be the biggest snake on the board.
+        - Cornering is most important. If I am about to starve, calculate how
+        long it's going to take to kill opponent (this is under the
+        presupposition that only 1 enemy snake remains.)
+        - Attacking. If my health is under 35, go for food immediately.
+        - My tail. Might switch this for food instead.
+        - Food
+        - Stalling
+        '''
+        objective, move = (None, None)
+        if (self.samaritan.health <= 35
+            or self.samaritan.length < 4
+            or not self.is_samaritan_biggest()):
+            objective, move = self.find_path_to_food() # should avoid doing this if i can win the game by killing the enemy by cornering.
+            if not objective == None:
+                return (objective, move)
+        objective, move = self.cornering_enemies()
+        if not objective == None:
+            return (objective, move)
+        objective, move = self.trapping_enemies()
+        if not objective == None:
+            return (objective, move)
+        if self.is_samaritan_biggest():
+            objective, move = self.attack_enemy()
+            if not objective == None:
+                return (objective, move)
+        objective, move = self.find_path_to_my_tail()
+        if not objective == None:
+            return (objective, move)
+        objective, move = stall(self)
+        if not objective == None:
+            return (objective, move)
+        return ("Death" , "left")
 
     def cornering_enemies(self):
         for snake in self.other_snakes:
@@ -269,7 +280,7 @@ class Board(object):
                                                     exit_node,
                                                     self.samaritan)
             if samaritan_path == None:
-                return False
+                continue
             distance_of_enemy_to_exit = len(enemy_path) - 1
             distance_of_samaritan_to_exit = len(samaritan_path) - 1
             if (distance_of_samaritan_to_exit < distance_of_enemy_to_exit
@@ -277,9 +288,146 @@ class Board(object):
                     and snake.length < self.samaritan.length)):
                 return ("Cornering", translate(self.samaritan.get_head(),
                                                samaritan_path[1]))
-            else:
-                return False
+        return (None, None)
 
+    def trapping_enemies(self):
+        for snake in self.other_snakes:
+            xcoord, ycoord = snake.get_head()
+            direction_of_enemy = translate(snake.coordinates[1],
+                                           snake.get_head())
+            permissible_directions_for_samaritan = [direction_of_enemy] # this process may be redundant as we check if it's a valid move later anyway?
+            my_direction = translate(self.samaritan.coordinates[1],
+                                     self.samaritan.get_head())
+            move = None
+            if xcoord == self.width-1:
+                permissible_directions_for_samaritan.append('right')
+                if my_direction in permissible_directions_for_samaritan:
+                    if (self.samaritan.get_head() == (self.width-2, ycoord)
+                        and self.is_valid_move(direction_of_enemy)):
+                        move = direction_of_enemy
+                    elif (self.samaritan.get_head() == (self.width-3, ycoord)
+                          and self.is_valid_move('right')):
+                          move = 'right'
+                    elif (self.samaritan.get_head() == (self.width-2, ycoord-1)
+                          and direction_of_enemy == 'down'
+                          and snake.length < self.samaritan.length
+                          and self.is_valid_move('down')):
+                          move = 'down'
+                    elif (self.samaritan.get_head() == (self.width-2, ycoord+1)
+                          and direction_of_enemy == 'up'
+                          and snake.length < self.samaritan.length
+                          and self.is_valid_move('up')):
+                          move = 'up'
+                    elif (self.samaritan.get_head() == (self.width-2, ycoord+1)
+                          and direction_of_enemy == 'down'
+                          and (len(self.get_neighbours(snake.get_head(),
+                                                      snake)) <= 1)
+                          and self.is_valid_move('down')):
+                          move = 'down'
+                    elif (self.samaritan.get_head() == (self.width-2, ycoord-1)
+                          and direction_of_enemy == 'up'
+                          and (len(self.get_neighbours(snake.get_head(),
+                                                      snake)) <= 1)
+                          and self.is_valid_move('up')):
+                          move = 'up'
+            elif xcoord == 0:
+                permissible_directions_for_samaritan.append('left')
+                if my_direction in permissible_directions_for_samaritan:
+                    if (self.samaritan.get_head() == (1, ycoord)
+                        and self.is_valid_move(direction_of_enemy)):
+                        move = direction_of_enemy
+                    elif (self.samaritan.get_head() == (2, ycoord)
+                          and self.is_valid_move('left')):
+                          move = 'left'
+                    elif (self.samaritan.get_head() == (1, ycoord-1)
+                          and direction_of_enemy == 'down'
+                          and snake.length < self.samaritan.length
+                          and self.is_valid_move('down')):
+                          move = 'down'
+                    elif (self.samaritan.get_head() == (1, ycoord+1)
+                          and direction_of_enemy == 'up'
+                          and snake.length < self.samaritan.length
+                          and self.is_valid_move('up')):
+                          move = 'up'
+                    elif (self.samaritan.get_head() == (1, ycoord+1)
+                          and direction_of_enemy == 'down'
+                          and (len(self.get_neighbours(snake.get_head(),
+                                                      snake)) <= 1)
+                          and self.is_valid_move('down')):
+                          move = 'down'
+                    elif (self.samaritan.get_head() == (1, ycoord-1)
+                          and direction_of_enemy == 'up'
+                          and (len(self.get_neighbours(snake.get_head(),
+                                                      snake)) <= 1)
+                          and self.is_valid_move('up')):
+                          move = 'up'
+            elif ycoord == self.width-1:
+                permissible_directions_for_samaritan.append('down')
+                if my_direction in permissible_directions_for_samaritan:
+                    if (self.samaritan.get_head() == (xcoord, self.height-2)
+                        and self.is_valid_move(direction_of_enemy)):
+                        move = direction_of_enemy
+                    elif (self.samaritan.get_head() == (xcoord, self.height-3)
+                          and self.is_valid_move('down')):
+                          move = 'down'
+                    elif (self.samaritan.get_head() == (xcoord-1, self.height-2)
+                          and direction_of_enemy == 'right'
+                          and snake.length < self.samaritan.length
+                          and self.is_valid_move('right')):
+                          move = 'right'
+                    elif (self.samaritan.get_head() == (xcoord+1, self.height-2)
+                          and direction_of_enemy == 'left'
+                          and snake.length < self.samaritan.length
+                          and self.is_valid_move('left')):
+                          move = 'left'
+                    elif (self.samaritan.get_head() == (xcoord+1, self.height-2)
+                          and direction_of_enemy == 'right'
+                          and (len(self.get_neighbours(snake.get_head(),
+                                                       snake)) <= 1)
+                          and self.is_valid_move('right')):
+                          move = 'right'
+                    elif (self.samaritan.get_head() == (xcoord-1, self.height-2)
+                          and direction_of_enemy == 'left'
+                          and (len(self.get_neighbours(snake.get_head(),
+                                                       snake)) <= 1)
+                          and self.is_valid_move('left')):
+                          move = 'left'
+            elif ycoord == 0:
+                permissible_directions_for_samaritan.append('up')
+                print permissible_directions_for_samaritan
+                if my_direction in permissible_directions_for_samaritan:
+                    if (self.samaritan.get_head() == (xcoord, 1)
+                        and self.is_valid_move(direction_of_enemy)):
+                        move = direction_of_enemy
+                    elif (self.samaritan.get_head() == (xcoord, 2)
+                          and self.is_valid_move('up')):
+                          move = 'up'
+                    elif (self.samaritan.get_head() == (xcoord-1, 1)
+                          and direction_of_enemy == 'right'
+                          and snake.length < self.samaritan.length
+                          and self.is_valid_move('right')):
+                          move = 'right'
+                    elif (self.samaritan.get_head() == (xcoord+1, 1)
+                          and direction_of_enemy == 'left'
+                          and snake.length < self.samaritan.length
+                          and self.is_valid_move('left')):
+                          move = 'left'
+                    elif (self.samaritan.get_head() == (xcoord+1, 1)
+                          and direction_of_enemy == 'right'
+                          and (len(self.get_neighbours(snake.get_head(),
+                                                       snake)) <= 1)
+                          and self.is_valid_move('right')):
+                          move = 'right'
+                    elif (self.samaritan.get_head() == (xcoord-1, 1)
+                          and direction_of_enemy == 'left'
+                          and (len(self.get_neighbours(snake.get_head(),
+                                                       snake)) <= 1)
+                          and self.is_valid_move('left')):
+                          move = 'left'
+            if move is not None:
+                return ('Trapping', move)
+
+        return (None, None)
 
     def find_path_to_food(self):
         cost_and_path_to_all_foods = []
@@ -333,7 +481,7 @@ class Board(object):
             else:
                 return ('Getting Food', translate(self.samaritan.get_head(),
                                           path_to_food[1]))
-        return False
+        return (None, None)
 
     def find_path_to_my_tail(self):
         if (bfs(self, self.samaritan.get_head(), self.samaritan.get_tail(),
@@ -345,23 +493,67 @@ class Board(object):
             return ('Going To My Tail', translate(self.samaritan.get_head(),
                                path_to_tail[1]))
         else:
-            return False
+            return (None, None)
 
-    # def attack_enemy(self):
-    #     distances_to_other_snakes = []
-    #     for snake in self.other_snakes:
-    #         heappush(distances_to_other_snakes, (get_manhattan_distance(self.samaritan.get_head(), snake.get_head()), snake))
-    #
-    #     while distances_to_other_snakes:
-    #         distance_to_snake, snake = heappop(distances_to_other_snakes)
-    #         if distance_to_snake <= 6:
-    #             return False
-    #         if (bfs(self, self.samaritan.get_head(), snake.get_head(),
-    #                 self.samaritan, True)):
-    #             cost_of_enemy, path_to_enemy = a_star(self,
-    #                                             self.samaritan.get_head(),
-    #                                             snake.get_head(),
-    #                                             self.samaritan, True)
-    #             return ('Attacking', translate(self.samaritan.get_head(),
-    #                                            path_to_enemy[1]))
-    #     return False
+    def attack_enemy(self):
+        distances_to_other_snakes = []
+        for snake in self.other_snakes:
+            heappush(distances_to_other_snakes,
+                     (get_manhattan_distance(self.samaritan.get_head(),
+                                             snake.get_head()), snake))
+
+        while distances_to_other_snakes:
+            distance_to_snake, snake = heappop(distances_to_other_snakes)
+            if distance_to_snake <= 1:
+                if self.is_head_on_collision(self.samaritan, snake):
+                    continue
+                else:
+                    direction_of_enemy = translate(snake.coordinates[1],
+                                                   snake.get_head())
+                    if self.is_valid_move(direction_of_enemy):
+                        return ('Attacking', direction_of_enemy)
+                    else:
+                        continue
+            if (bfs(self, self.samaritan.get_head(), snake.get_head(),
+                    self.samaritan, True)):
+                cost_of_enemy, path_to_enemy = a_star(self,
+                                                self.samaritan.get_head(),
+                                                snake.get_head(),
+                                                self.samaritan, True)
+                return ('Attacking', translate(self.samaritan.get_head(),
+                                               path_to_enemy[1]))
+        return (None, None)
+
+    def is_head_on_collision(self, first_snake, second_snake):
+        '''Returns a boolean telling us if two snakes are going in the opposite
+        directions.
+        '''
+        first_node = first_snake.get_head()
+        second_node = first_snake.coordinates[1]
+        direction_of_first_snake = translate(second_node, first_node)
+        first_node = second_snake.get_head()
+        second_node = second_snake.coordinates[1]
+        direction_of_second_snake = translate(second_node, first_node)
+        return ((direction_of_first_snake == 'up' and
+                 direction_of_second_snake == 'down') or
+                (direction_of_first_snake == 'down' and
+                 direction_of_second_snake == 'up') or
+                (direction_of_first_snake == 'left' and
+                 direction_of_second_snake == 'right') or
+                (direction_of_first_snake == 'right' and
+                 direction_of_second_snake == 'left'))
+
+    def is_valid_move(self, move):
+        '''Tells us if taking a certain move with Samaritan is valid.
+        '''
+        xcoord, ycoord = self.samaritan.get_head()
+        valid_coordinates = self.get_neighbours((xcoord, ycoord),
+                                                self.samaritan)
+        if move == 'up':
+            return (xcoord, ycoord-1) in valid_coordinates
+        elif move == 'down':
+            return (xcoord, ycoord+1) in valid_coordinates
+        elif move == 'left':
+            return (xcoord-1, ycoord) in valid_coordinates
+        elif move == 'right':
+            return (xcoord+1, ycoord) in valid_coordinates

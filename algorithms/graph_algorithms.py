@@ -1,5 +1,5 @@
 from heapq import heappush, heappop
-from utils import get_manhattan_distance
+from utils import get_manhattan_distance, translate
 from collections import deque
 
 
@@ -50,6 +50,26 @@ def bfs(board, start, target, snake, attacking=False):
                 queue.append(neighbour)
     return False
 
+def stall(board):
+    '''An algorithm that is used as a last resort by Samaritan when it's trapped
+    '''
+    possible_routes = []
+    neighbours_of_samaritan = board.get_neighbours(board.samaritan.get_head(),
+                                                   board.samaritan)
+    for neighbour in neighbours_of_samaritan:
+        heappush(possible_routes, (1, [neighbour], set([neighbour])))
+    if not possible_routes:
+        return (None, None)
+    while possible_routes:
+        length_of_path, path, visited_nodes = heappop(possible_routes)
+        neighbours_of_node = board.get_neighbours(path[-1], board.samaritan,
+                                                  length_of_path)
+        for neighbour in neighbours_of_node:
+            if neighbour not in visited_nodes:
+                visited_nodes.add(neighbour)
+                heappush(possible_routes, (length_of_path+1, path + [neighbour],
+                                           visited_nodes))
+    return ('Stalling', translate(board.samaritan.get_head(), path[0]))
 
 def get_heuristic(curr_node, target):
     '''Returns the heuristic cost for A*
