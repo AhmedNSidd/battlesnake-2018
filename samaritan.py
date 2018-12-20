@@ -27,12 +27,12 @@ def start():
     information for Samaritan.
     '''
     return {
-        "color": "#FF0000",
-        "secondary_color": "#00FF00",
+        "color": "#ededed",
+        "secondary_color": "#ededed",
         "head_url": "https://i.ytimg.com/vi/er3BMWuf310/maxresdefault.jpg",
         "taunt": "Calculated.",
-        "head_type": "pixel",
-        "tail_type": "pixel"
+        "head_type": "smile",
+        "tail_type": "freckled"
         }
 
 
@@ -51,7 +51,7 @@ def move():
     print (time.time() - start) * 1000, "ms"
     return {
         'move': action,
-        'taunt': "Can you hear me?"
+        'taunt': objective
         }
 
 
