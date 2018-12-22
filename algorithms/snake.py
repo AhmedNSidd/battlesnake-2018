@@ -12,22 +12,39 @@ class Snake(object):
         self.length = length
 
     def get_head(self):
-        '''Returns head of Snake object
+        '''Returns head coords of Snake object
         '''
         return self.coordinates[0]
 
     def get_tail(self):
-        '''Returns tail of Snake object
+        '''Returns tail coords of Snake object
         '''
         return self.coordinates[-1]
 
-    def is_tail_safe(self):
+    def how_long_to_grow(self):
         '''
-        If the coordinates of the last two indices of the snake are the same,
-        that means that the snake is still growing out of his tail and hence,
-        the tail is not a safe node.
+        If the coordinates of the last indices of the snake are the same,
+        that means that the snake is still growing out of his tail. This
+        function calculates how long it will it take for the tail node to
+        disappear
         '''
-        return self.coordinates[-1] != self.coordinates[-2]
+        time_to_disappear = 1
+        snake_tail = self.get_tail()
+        for snake_node in reversed(self.coordinates[:-1]):
+            if snake_node == snake_tail:
+                time_to_disappear += 1
+        return time_to_disappear
+
+    def coordinates_with_no_repeats(self):
+        '''Returns a list of coordinates with no repeat nodes e.g. when a snake
+        is still growing out of it's tail.
+        '''
+        snake_coordinates = [self.get_head()]
+        for node in self.coordinates:
+            if node != snake_coordinates[-1]:
+                snake_coordinates.append(node)
+        return snake_coordinates
+
 
 
 
