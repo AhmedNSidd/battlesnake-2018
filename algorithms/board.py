@@ -13,10 +13,8 @@ class Board(object):
 
     def __init__(self, data):
         '''
-        This function receives game state information as a parameter and creates
-        an instance of a board object with relevant information set as instance
-        variables for the object. It also marks and prints a grid representing
-        the board.
+        This function receives board information such as width and height and
+        creates an empty grid to fill out once we recieve more information.
         '''
         self.data = data
         self.width = data['width']
@@ -29,6 +27,7 @@ class Board(object):
                              if self.samaritan.id != snake['id']]
         self._mark_grid()
         self.print_grid()
+
 
     def _parse_data_list(self, data_list):
         '''
@@ -83,7 +82,6 @@ class Board(object):
             for point in row:
                 print point,
             print
-        print
         print
 
     def all_snake_objects(self):
@@ -165,8 +163,8 @@ class Board(object):
                 # print "neighbour: ", node
                 # print "time_to_disappear", time_to_disappear
                 # print "distance_to_node", distance_to_node
-        if time_to_disappear <= distance_to_node:
-            node_empty = True
+                if time_to_disappear <= distance_to_node:
+                    node_empty = True
 
         return node_empty
 
@@ -182,37 +180,53 @@ class Board(object):
             or xcoord == 0
             or ycoord == 0):
             cost += 1
+            for snake in self.other_snakes:
+                if (get_manhattan_distance(snake.get_head(), node) <=
+                   get_manhattan_distance(self.samaritan.get_head(), node) + 2):
+                    cost += 10
             if ((xcoord == (self.width-1) and ycoord == (self.height-1))
                 or (xcoord == (self.width-1) and ycoord == 0)
                 or (xcoord == 0 and ycoord == (self.height-1))
                 or (xcoord == 0 and ycoord == 0)):
                 cost += 1
             else:
-                if (xcoord == self.width-1
-                    and (self.grid[ycoord][xcoord-1] == ENEMY_SNAKE_BODY_MARKER
-                    or self.grid[ycoord][xcoord-1] == SAMARITAN_BODY_MARKER)):
-                    # if self.grid[ycoord][xcoord-1] == ENEMY_SNAKE_HEAD_MARKER:
-                    #     cost += 999
-                    cost += 1
-                elif (ycoord == self.height-1 and
-                      (self.grid[ycoord-1][xcoord] == ENEMY_SNAKE_BODY_MARKER or
-                      self.grid[ycoord-1][xcoord] == SAMARITAN_BODY_MARKER)):
-                      cost += 2
-                elif (xcoord == 0 and
-                      (self.grid[ycoord][xcoord+1] == ENEMY_SNAKE_BODY_MARKER or
-                      self.grid[ycoord][xcoord+1] == SAMARITAN_BODY_MARKER)):
-                      cost += 2
-                elif (ycoord == 0 and
-                      (self.grid[ycoord+1][xcoord] == ENEMY_SNAKE_BODY_MARKER or
-                      self.grid[ycoord+1][xcoord] == SAMARITAN_BODY_MARKER)):
-                      cost += 2
+                if xcoord == self.width-1:
+                    if self.grid[ycoord][xcoord-1] == ENEMY_SNAKE_BODY_MARKER:
+                        cost += 6
+                    elif self.grid[ycoord][xcoord-1] == SAMARITAN_BODY_MARKER:
+                        cost += 1
+                elif ycoord == self.height-1:
+                    if self.grid[ycoord-1][xcoord] == ENEMY_SNAKE_BODY_MARKER:
+                        cost += 6
+                    elif self.grid[ycoord-1][xcoord] == SAMARITAN_BODY_MARKER:
+                        cost += 1
+                elif xcoord == 0:
+                      if self.grid[ycoord][xcoord+1] == ENEMY_SNAKE_BODY_MARKER:
+                          cost += 6
+                      elif self.grid[ycoord][xcoord+1] == SAMARITAN_BODY_MARKER:
+                          cost += 1
+                elif ycoord == 0:
+                      if self.grid[ycoord+1][xcoord] == ENEMY_SNAKE_BODY_MARKER:
+                          cost += 6
+                      elif self.grid[ycoord+1][xcoord] == SAMARITAN_BODY_MARKER:
+                          cost += 1
         neighbours = [
                 (xcoord+1, ycoord), (xcoord-1, ycoord),
                 (xcoord, ycoord+1), (xcoord, ycoord-1)
                 ]
         horizontal_neighbours = neighbours[:2]
         vertical_neighbours = neighbours[2:]
+        diagonal_neighbours = [
+                (xcoord+1, ycoord+1), (xcoord-1, ycoord-1),
+                (xcoord+1, ycoord-1), (xcoord-1, ycoord+1)
+                ]
         valid_neighbours = self.get_neighbours(node, self.samaritan)
+        if len(valid_neighbours) == 1:
+            for diagonal_neighbour in diagonal_neighbours:
+                x_diag, y_diag = diagonal_neighbour
+                if (-1 < x_diag < self.width and -1 < y_diag < self.height):
+                    if self.grid[y_diag][x_diag] == ENEMY_SNAKE_HEAD_MARKER:
+                        cost += 999
         if (self.grid[ycoord][xcoord] == EMPTY_SPACE_MAKERS
             and len(valid_neighbours) == 0):
             cost += 999
@@ -253,15 +267,14 @@ class Board(object):
         objective, move = self.trapping_enemies()
         if not objective == None:
             return (objective, move)
-        if self.samaritan.health > (safe_food_health_limit+risky_food_health_limit)/2 and self.is_samaritan_biggest():
+        if self.samaritan.health > 50 and self.is_samaritan_biggest():
             objective, move = self.attack_enemy()
             if not objective == None:
                 return (objective, move)
         objective, move = self.find_path_to_safe_food()
         if not objective == None:
             return (objective, move)
-        if (self.samaritan.health <= risky_food_health_limit
-            or self.samaritan.length % 2 != 0):
+        if self.samaritan.health <= risky_food_health_limit:
             objective, move = self.find_path_to_risky_food()
             if not objective == None:
                 return (objective, move)
@@ -452,6 +465,34 @@ class Board(object):
 
         return (None, None)
 
+    # def walling_enemies(self):
+    #     neighbours = self.get_neighbours(self.samaritan.get_head(),
+    #                                      self.samaritan)
+    #     for neighbour in neighbours:
+    #         start = self.samaritan.get_head()
+    #         destination = neighbour
+    #         distance_to_neighbour_node = 1
+    #         direction = translate(start, destination)
+    #         valid_move = True
+    #         path_to_edge = []
+    #         while valid_move:
+    #             path_to_edge.append(destination)
+    #             start = destination
+    #             distance_to_neighbour_node += 1
+    #             destination_x, destination_y = destination
+    #             if direction == 'up':
+    #                 destination = (destination_x, destination_y-1)
+    #             elif direction == 'down':
+    #                 destination = (destination_x, destination_y+1)
+    #             elif direction == 'left':
+    #                 destination = (destination_x-1, destination_y)
+    #             else:
+    #                 destination = (destination_x+1, destination_y)
+    #             valid_move = self.is_valid_move(start, direction,
+    #                                             distance_to_neighbour_node)
+    #         for self.
+
+
     def find_path_to_safe_food(self):
         cost_and_path_to_all_foods = []
         for food in self.foods:
@@ -584,65 +625,6 @@ class Board(object):
                                           path_to_food[1]))
         return (None, None)
 
-    # def find_path_to_food(self):
-    #     cost_and_path_to_all_foods = []
-    #     for food in self.foods:
-    #         # print food
-    #         heappush(cost_and_path_to_all_foods,
-    #                  a_star(self, self.samaritan.get_head(), food,
-    #                         self.samaritan))
-    #
-    #     while cost_and_path_to_all_foods:
-    #         # print cost_and_path_to_all_foods
-    #         cost, path_to_food = heappop(cost_and_path_to_all_foods)
-    #         if cost == None:
-    #             continue
-    #         if len(path_to_food) - 1 > self.samaritan.health:
-    #             continue
-    #         data_for_new_board = deepcopy(self.data) # this prevents changing self.data when changing the copy.
-    #         for food in data_for_new_board['food']['data'][:]:
-    #             if (food['x'], food['y']) == path_to_food[-1]:
-    #                 data_for_new_board['food']['data'].remove(food)
-    #                 break
-    #         steps_to_food = len(path_to_food) - 1
-    #         data_for_new_board['you']['health'] = 100
-    #         data_for_new_board['you']['length'] = self.samaritan.length + 1
-    #         my_snake_coords = data_for_new_board['you']['body']['data']
-    #         new_snake_coords = []
-    #         if self.samaritan.length <= steps_to_food:
-    #             for x in range(self.samaritan.length):
-    #                 # Our new snake coordinates will start with head on food.
-    #                 xcoord, ycoord = path_to_food[-1-x]
-    #                 new_snake_coords.append({
-    #                   "object": "point",
-    #                   "x": xcoord,
-    #                   "y": ycoord
-    #                 })
-    #         else:
-    #             for x in range(steps_to_food):
-    #                 my_snake_coords.pop()
-    #             for xcoord, ycoord in path_to_food[1:]:
-    #                 my_snake_coords.insert(0, {
-    #                   "object": "point",
-    #                   "x": xcoord,
-    #                   "y": ycoord
-    #                 })
-    #             new_snake_coords = my_snake_coords
-    #
-    #         # Since our length is going to increase by 1 after getting the food.
-    #         new_snake_coords.append(new_snake_coords[-1])
-    #         data_for_new_board['you']['body']['data'] = new_snake_coords
-    #         board_after_samaritan_eats = Board(data_for_new_board)
-    #         objective, action = board_after_samaritan_eats.get_action()
-    #         # print objective
-    #         # print action
-    #         if objective == 'Death' or objective == 'Stalling':
-    #             continue
-    #         else:
-    #             return ('Getting Food', translate(self.samaritan.get_head(),
-    #                                       path_to_food[1]))
-    #     return (None, None)
-
     def find_path_to_my_tail(self):
         if (bfs(self, self.samaritan.get_head(), self.samaritan.get_tail(),
                 self.samaritan)):
@@ -683,6 +665,8 @@ class Board(object):
                                                 snake.get_head(),
                                                 self.samaritan,
                                                 snake.get_head())
+                if cost_of_enemy >= 8:
+                    return (None, None)
                 # print path_to_enemy
                 if cost_of_enemy != None:
                     return ('Attacking', translate(self.samaritan.get_head(),
@@ -708,12 +692,14 @@ class Board(object):
                 (direction_of_first_snake == 'right' and
                  direction_of_second_snake == 'left'))
 
-    def is_valid_move(self, move):
+    def is_valid_move(self, move, distance=1, start=None):
         '''Tells us if taking a certain move with Samaritan is valid.
         '''
-        xcoord, ycoord = self.samaritan.get_head()
+        if start == None:
+            start = self.samaritan.get_head()
+        xcoord, ycoord = start
         valid_coordinates = self.get_neighbours((xcoord, ycoord),
-                                                self.samaritan, 1)
+                                                self.samaritan, distance)
         if move == 'up':
             return (xcoord, ycoord-1) in valid_coordinates
         elif move == 'down':
@@ -722,3 +708,4 @@ class Board(object):
             return (xcoord-1, ycoord) in valid_coordinates
         elif move == 'right':
             return (xcoord+1, ycoord) in valid_coordinates
+        return False

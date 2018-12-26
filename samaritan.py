@@ -45,8 +45,7 @@ def move():
     what move and taunt we want to return.
     '''
     start = time.time()
-    data = bottle.request.json
-    environment = Board(data)
+    environment = Board(bottle.request.json)
     objective, action = environment.get_action()
     print (time.time() - start) * 1000, "ms"
     return {
