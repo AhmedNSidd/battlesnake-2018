@@ -522,16 +522,17 @@ class Board(object):
             if cost_of_food >= 6:
                 continue
             data_for_new_board = deepcopy(self.data)        # this prevents changing self.data when changing the copy.
+            foods_in_path = 0
             for food in data_for_new_board['food']['data'][:]:
-                if (food['x'], food['y']) == path_to_food[-1]:
+                if (food['x'], food['y']) in path_to_food:
                     data_for_new_board['food']['data'].remove(food)
-                    break
+                    foods_in_path += 1
             data_for_new_board['you']['health'] = 100
-            data_for_new_board['you']['length'] = self.samaritan.length + 1
             my_snake_coords = data_for_new_board['you']['body']['data']
             new_snake_coords = []
-            if self.samaritan.length <= actual_distance_to_food:
-                for x in range(self.samaritan.length):
+            data_for_new_board['you']['length'] = self.samaritan.length + foods_in_path
+            if (data_for_new_board['you']['length']-1) <= actual_distance_to_food:
+                for x in range(data_for_new_board['you']['length']-1):
                     # Our new snake coordinates will start with head on food.
                     xcoord, ycoord = path_to_food[-1-x]
                     new_snake_coords.append({
@@ -540,7 +541,7 @@ class Board(object):
                       "y": ycoord
                     })
             else:
-                for x in range(actual_distance_to_food):
+                for x in range(actual_distance_to_food-(foods_in_path-1)):
                     my_snake_coords.pop()
                 for xcoord, ycoord in path_to_food[1:]:
                     my_snake_coords.insert(0, {
@@ -550,7 +551,6 @@ class Board(object):
                     })
                 new_snake_coords = my_snake_coords
 
-            # Since our length is going to increase by 1 after getting the food.
             new_snake_coords.append(new_snake_coords[-1])
             data_for_new_board['you']['body']['data'] = new_snake_coords
             board_after_samaritan_eats = Board(data_for_new_board)
@@ -583,16 +583,17 @@ class Board(object):
             if cost_of_food >= 12:
                 continue
             data_for_new_board = deepcopy(self.data)        # this prevents changing self.data when changing the copy.
+            foods_in_path = 0
             for food in data_for_new_board['food']['data'][:]:
-                if (food['x'], food['y']) == path_to_food[-1]:
+                if (food['x'], food['y']) in path_to_food:
                     data_for_new_board['food']['data'].remove(food)
-                    break
+                    foods_in_path += 1
             data_for_new_board['you']['health'] = 100
-            data_for_new_board['you']['length'] = self.samaritan.length + 1
+            data_for_new_board['you']['length'] = self.samaritan.length + foods_in_path
             my_snake_coords = data_for_new_board['you']['body']['data']
             new_snake_coords = []
-            if self.samaritan.length <= actual_distance_to_food:
-                for x in range(self.samaritan.length):
+            if (data_for_new_board['you']['length']-1) <= actual_distance_to_food:
+                for x in range(data_for_new_board['you']['length']-1):
                     # Our new snake coordinates will start with head on food.
                     xcoord, ycoord = path_to_food[-1-x]
                     new_snake_coords.append({
@@ -601,7 +602,7 @@ class Board(object):
                       "y": ycoord
                     })
             else:
-                for x in range(actual_distance_to_food):
+                for x in range(actual_distance_to_food-(foods_in_path-1)):
                     my_snake_coords.pop()
                 for xcoord, ycoord in path_to_food[1:]:
                     my_snake_coords.insert(0, {
