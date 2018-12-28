@@ -72,6 +72,19 @@ def stall(board):
                                            visited_nodes))
     return ('Stalling', translate(board.samaritan.get_head(), path[0]))
 
+def floodfill(board, snake):
+    processed = set()
+    start = snake.get_head()
+    to_be_processed = [(snake.get_head(), 0)]
+    while to_be_processed:
+        curr_node, length_of_path = to_be_processed.pop()
+        processed.add(curr_node)
+        neighbours = board.get_neighbours(curr_node, snake, length_of_path+1)
+        for neighbour in neighbours:
+            if neighbour not in processed:
+                to_be_processed.append((neighbour, length_of_path+1))
+    return len(processed) - 1
+
 def get_heuristic(curr_node, target):
     '''Returns the heuristic cost for A*
     '''

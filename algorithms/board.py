@@ -2,7 +2,7 @@ import snake
 from constants import *
 from utils import get_manhattan_distance, translate
 from heapq import heappush, heappop
-from graph_algorithms import a_star, bfs, stall
+from graph_algorithms import a_star, bfs, stall, floodfill
 from copy import deepcopy
 
 class Board(object):
@@ -175,6 +175,8 @@ class Board(object):
         '''
         cost = 1
         xcoord, ycoord = node
+        if self.grid[ycoord][xcoord] == ENEMY_SNAKE_BODY_MARKER:
+            cost += 11
         if (xcoord == (self.width-1)
             or ycoord == (self.height-1)
             or xcoord == 0
@@ -265,6 +267,9 @@ class Board(object):
             return (objective, move)
         print "Trapping Enemies"
         objective, move = self.trapping_enemies()
+        if not objective == None:
+            return (objective, move)
+        objective, move = self.walling_enemies()
         if not objective == None:
             return (objective, move)
         if self.samaritan.health > 50 and self.is_samaritan_biggest():
@@ -465,33 +470,134 @@ class Board(object):
 
         return (None, None)
 
-    # def walling_enemies(self):
-    #     neighbours = self.get_neighbours(self.samaritan.get_head(),
-    #                                      self.samaritan)
-    #     for neighbour in neighbours:
-    #         start = self.samaritan.get_head()
-    #         destination = neighbour
-    #         distance_to_neighbour_node = 1
-    #         direction = translate(start, destination)
-    #         valid_move = True
-    #         path_to_edge = []
-    #         while valid_move:
-    #             path_to_edge.append(destination)
-    #             start = destination
-    #             distance_to_neighbour_node += 1
-    #             destination_x, destination_y = destination
-    #             if direction == 'up':
-    #                 destination = (destination_x, destination_y-1)
-    #             elif direction == 'down':
-    #                 destination = (destination_x, destination_y+1)
-    #             elif direction == 'left':
-    #                 destination = (destination_x-1, destination_y)
-    #             else:
-    #                 destination = (destination_x+1, destination_y)
-    #             valid_move = self.is_valid_move(start, direction,
-    #                                             distance_to_neighbour_node)
-    #         for self.
+    def walling_enemies(self):
+        neighbours = self.get_neighbours(self.samaritan.get_head(),
+                                         self.samaritan)
+        for neighbour in neighbours:
+            data_for_new_board = deepcopy(self.data)
+            start = self.samaritan.get_head()
+            destination = neighbour
+            distance_to_edge = 0
+            direction = translate(start, destination)
+            valid_move = True
+            path_to_edge = [self.samaritan.get_head()]
+            foods_in_path = 0
+            food_on_last_node = False
+            while valid_move:
+                food_on_last_node = False
+                path_to_edge.append(destination)
+                start = destination
+                distance_to_edge += 1
+                target_x, target_y = destination
+                if self.grid[target_y][target_x] != EMPTY_SPACE_MAKERS:
+                    if destination in self.foods:
+                        data_for_new_board['food']['data'].remove({
+                            "object": "point",
+                            "x": target_x,
+                            "y": target_y
+                        })
+                        data_for_new_board['you']['health'] = 100
+                        foods_in_path += 1
+                        food_on_last_node = True        # if there's a food on the last node it means the snake hasn't fully grown out.
+                    else:
+                        if destination not in self.samaritan.coordinates:
+                            for snake in self.other_snakes:
+                                if destination in snake.coordinates:
+                                    for x in range(len(data_for_new_board['snakes']['data'])):
+                                        if data_for_new_board['snakes']['data'][x]['id'] == snake.id:
+                                            for body_coord in data_for_new_board['snakes']['data'][x]['body']['data']:
+                                                if body_coord['x'] == target_x and body_coord['y'] == target_y:
+                                                    data_for_new_board['snakes']['data'][x]['body']['data'].remove(body_coord)
+                if direction == 'up':
+                    destination = (target_x, target_y-1)
+                elif direction == 'down':
+                    destination = (target_x, target_y+1)
+                elif direction == 'left':
+                    destination = (target_x-1, target_y)
+                else:
+                    destination = (target_x+1, target_y)
+                valid_move = self.is_valid_coordinate(destination[0],
+                                                      destination[1],
+                                                      self.samaritan,
+                                                      distance_to_edge+1,
+                                                    foods_in_path=foods_in_path)
+            # at this point, a path to an edge will be formed, so we need to
+            # form data with a future samaritan who has followed this path
+            my_snake_coords = data_for_new_board['you']['body']['data']
+            new_snake_coords = []
+            if food_on_last_node:
+                data_for_new_board['you']['length'] = (self.samaritan.length
+                                                        + foods_in_path)
+                if (data_for_new_board['you']['length']-1) <= distance_to_edge:
+                    for x in range(data_for_new_board['you']['length']-1):
+                        # Our new snake coordinates will start with head on food.
+                        xcoord, ycoord = path_to_edge[-1-x]
+                        new_snake_coords.append({
+                            "object": "point",
+                            "x": xcoord,
+                            "y": ycoord
+                            })
+                else:
+                    for x in range(distance_to_edge-(foods_in_path-1)):
+                        my_snake_coords.pop()
+                    for xcoord, ycoord in path_to_edge[1:]:
+                        my_snake_coords.insert(0, {
+                            "object": "point",
+                            "x": xcoord,
+                            "y": ycoord
+                            })
+                    new_snake_coords = my_snake_coords
+                    new_snake_coords.append(new_snake_coords[-1])
+            else:
+                data_for_new_board['you']['length'] = (self.samaritan.length
+                                                        + foods_in_path)
+                if data_for_new_board['you']['length'] <= distance_to_edge:
+                    for x in range(data_for_new_board['you']['length']):
+                        # Our new snake coordinates will start with head on food.
+                        xcoord, ycoord = path_to_edge[-1-x]
+                        new_snake_coords.append({
+                            "object": "point",
+                            "x": xcoord,
+                            "y": ycoord
+                            })
+                else:
+                    for x in range(distance_to_edge-foods_in_path):
+                        my_snake_coords.pop()
+                    for xcoord, ycoord in path_to_edge[1:]:
+                        my_snake_coords.insert(0, {
+                            "object": "point",
+                            "x": xcoord,
+                            "y": ycoord
+                            })
+                    new_snake_coords = my_snake_coords
 
+            data_for_new_board['you']['body']['data'] = new_snake_coords
+            new_board = Board(data_for_new_board)
+            for x in range(len(new_board.other_snakes)):
+                enemy_snake = self.other_snakes[x]
+                new_board_area = new_board.area(enemy_snake)
+                current_board_area = self.area(enemy_snake)
+                print new_board_area
+                print current_board_area
+                if (new_board_area < current_board_area
+                    and new_board_area <= enemy_snake.length):
+                    can_wall_off_faster = True
+                    for node in path_to_edge[1:]:
+                        my_distance_to_node = get_manhattan_distance(
+                                                self.samaritan.get_head(), node)
+                        enemy_distance_to_node = get_manhattan_distance(
+                                                 enemy_snake.get_head(), node)
+                        if my_distance_to_node > enemy_distance_to_node:
+                            can_wall_off_faster = False
+                            break
+                        elif (my_distance_to_node == enemy_distance_to_node
+                              and enemy_snake.length >= self.samaritan.length):
+                              can_wall_off_faster = False
+                              break
+                    if can_wall_off_faster:
+                        return ('Walling off', translate(
+                                self.samaritan.get_head(), path_to_edge[1]))
+        return (None, None)
 
     def find_path_to_safe_food(self):
         cost_and_path_to_all_foods = []
@@ -710,3 +816,6 @@ class Board(object):
         elif move == 'right':
             return (xcoord+1, ycoord) in valid_coordinates
         return False
+
+    def area(self, snake):
+        return floodfill(self, snake)
