@@ -28,7 +28,7 @@ class Snake(object):
         function calculates how long it will it take for the tail node to
         disappear
         '''
-        time_to_disappear = 1
+        time_to_disappear = 0
         snake_tail = self.get_tail()
         for snake_node in reversed(self.coordinates[:-1]):
             if snake_node == snake_tail:

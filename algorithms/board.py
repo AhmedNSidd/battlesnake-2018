@@ -2,7 +2,7 @@ import snake
 from constants import *
 from utils import get_manhattan_distance, translate
 from heapq import heappush, heappop
-from graph_algorithms import a_star, bfs, stall, floodfill
+from graph_algorithms import a_star, stall, floodfill
 from copy import deepcopy
 
 class Board(object):
@@ -11,10 +11,19 @@ class Board(object):
     requesting a move.
     '''
 
-    def __init__(self, data):
+    def __init__(self, data, mode=0):
         '''
         This function receives board information such as width and height and
         creates an empty grid to fill out once we recieve more information.
+        It also has a mode instance variable:
+        If mode is 0, everything is accessible in Board
+        If mode is 1, then we are in a recursive call for the purposes of seeing
+        whether getting food is going to kill us afterwards. So it's going to
+        restrict all attacking strategies and check if we have defensive
+        strategies
+        If mode is 2, then we are in a recursive call for the purposes of
+        paranoia, it's going to need all the attacking strategies but no
+        defensive one.
         '''
         self.data = data
         self.width = data['width']
@@ -25,6 +34,8 @@ class Board(object):
         self.other_snakes = [self._parse_snake_object(snake)
                              for snake in data['snakes']['data']
                              if self.samaritan.id != snake['id']]
+        self.mode = mode
+        self.bad_moves = []
         self._mark_grid()
         self.print_grid()
 
@@ -93,12 +104,12 @@ class Board(object):
         '''Returns a boolean telling us whether samaritan is the biggest snake
         on the board.'''
         for snake in self.other_snakes:
-            if snake.length >= self.samaritan.length:
+            if snake.length + 2 >= self.samaritan.length:
                 return False
         return True
 
     def get_neighbours(self, node, snake, distance_to_neighbour_nodes=1,
-                       ignoring_node=(None, None), foods_in_path=0):
+                       foods_in_path=0):
         '''
         Return a list of neighbours of a node if they are valid coordinates that
         Samaritan can go to.
@@ -122,23 +133,20 @@ class Board(object):
             (xcoord + 1, ycoord), (xcoord - 1, ycoord),
             (xcoord, ycoord + 1), (xcoord, ycoord - 1)
             ]
-
         return [(i, j)
                 for i, j in neighbours
                 if self.is_valid_coordinate(i, j, snake,
                                             distance_to_neighbour_nodes,
-                                            ignoring_node, foods_in_path)]
+                                            foods_in_path)]
 
     def is_valid_coordinate(self, xcoord, ycoord, snake, distance_to_node,
-                            ignoring_node=(None, None), foods_in_path=0):
+                            foods_in_path=0):
         '''
         Check if a node is a valid node that Samaritan can go to without dying
         i.e., it's not out of the board, and if it's a wall, it won't be a
         wall by the time I get to it.
         '''
         node = (xcoord, ycoord)
-        if node == ignoring_node:
-            return True
         if not (-1 < xcoord < self.width and -1 < ycoord < self.height):
             return False
         node_empty = (self.grid[ycoord][xcoord] != SAMARITAN_BODY_MARKER
@@ -154,26 +162,24 @@ class Board(object):
                 if snake == self.samaritan:
                     time_to_disappear += foods_in_path
                 snake_coordinates = snake.coordinates_with_no_repeats()
-                # print snake_coordinates
                 for snakes_node in reversed(snake_coordinates):
+                    time_to_disappear += 1
                     if snakes_node == node:
                         break
-                    time_to_disappear += 1
-
-                # print "neighbour: ", node
-                # print "time_to_disappear", time_to_disappear
-                # print "distance_to_node", distance_to_node
                 if time_to_disappear <= distance_to_node:
                     node_empty = True
 
         return node_empty
 
-    def get_cost(self, node):
+    def get_cost(self, node, distance_to_node, foods_in_path):
         '''
         Helps calculate cost for the A* algorithm. If the node is in a dangerous
         spot, the cost is increased.
         '''
         cost = 1
+        if (distance_to_node == 1
+            and translate(self.samaritan.get_head(), node) in self.bad_moves):
+            cost += 99999
         xcoord, ycoord = node
         if self.grid[ycoord][xcoord] == ENEMY_SNAKE_BODY_MARKER:
             cost += 11
@@ -184,7 +190,7 @@ class Board(object):
             cost += 1
             for snake in self.other_snakes:
                 if (get_manhattan_distance(snake.get_head(), node) <=
-                   get_manhattan_distance(self.samaritan.get_head(), node) + 2):
+                    distance_to_node + 2):
                     cost += 10
             if ((xcoord == (self.width-1) and ycoord == (self.height-1))
                 or (xcoord == (self.width-1) and ycoord == 0)
@@ -222,7 +228,7 @@ class Board(object):
                 (xcoord+1, ycoord+1), (xcoord-1, ycoord-1),
                 (xcoord+1, ycoord-1), (xcoord-1, ycoord+1)
                 ]
-        valid_neighbours = self.get_neighbours(node, self.samaritan)
+        valid_neighbours = self.get_neighbours(node, self.samaritan, distance_to_node, foods_in_path)
         if len(valid_neighbours) == 1:
             for diagonal_neighbour in diagonal_neighbours:
                 x_diag, y_diag = diagonal_neighbour
@@ -250,52 +256,75 @@ class Board(object):
         - Food
         - Stalling
         '''
-        if len(self.other_snakes) == 0:
-            safe_food_health_limit = 70
-            risky_food_health_limit = 70
-        else:
-            safe_food_health_limit = 65
-            risky_food_health_limit = 35
-        objective, move = (None, None)
-        # if self.samaritan.length < 4:
-        #     objective, move = self.find_path_to_food() # should avoid doing this if i can win the game by killing the enemy by cornering.
-        #     if not objective == None:
-        #         return (objective, move)
-        print "Cornering Enemies"
-        objective, move = self.cornering_enemies()
-        if not objective == None:
+        if self.mode == 0:
+            if len(self.other_snakes) == 0:
+                health_limit = 70
+            else:
+                health_limit = 40
+            objective, move = None, None
+            enemy_id = None
+            while True:
+                if objective == None:
+                    objective, move, enemy_id = self.cornering_enemies()
+                if objective == None:
+                    objective, move, enemy_id = self.trapping_enemies()
+                if objective == None:
+                    objective, move, enemy_id = self.walling_enemies()
+
+                if (self.samaritan.health <= health_limit
+                    or not self.is_samaritan_biggest()):
+                    if objective == None:
+                        objective, move = self.find_path_to_safe_food()
+                    if objective == None:
+                        objective, move = self.find_path_to_risky_food()
+                    if objective == None:
+                        objective, move = self.find_path_to_my_tail()
+                else:
+                    if objective == None:
+                        objective, move = self.attack_enemy()
+                    if objective == None:
+                        objective, move = self.find_path_to_my_tail()
+                    if objective == None:
+                        objective, move = self.find_path_to_safe_food()
+                    if objective == None:
+                        objective, move = self.find_path_to_risky_food()
+                if objective == None:
+                    objective, move = stall(self)
+                if objective != None:
+                    print objective
+                    print move
+                    is_it_a_good_move = self.is_it_a_good_move(objective, move)
+                    print is_it_a_good_move
+                    if (is_it_a_good_move):
+                        break
+                    else:
+                        if objective == 'Stalling':
+                            break
+                        self.bad_moves.append(move)
+                        objective, move = None, None
+                else:
+                    return ('Death', 'left')
             return (objective, move)
-        print "Trapping Enemies"
-        objective, move = self.trapping_enemies()
-        if not objective == None:
-            return (objective, move)
-        objective, move = self.walling_enemies()
-        if not objective == None:
-            return (objective, move)
-        if self.samaritan.health > 50 and self.is_samaritan_biggest():
-            objective, move = self.attack_enemy()
+        elif self.mode == 1:
+            objective, move = self.find_path_to_my_tail()
             if not objective == None:
                 return (objective, move)
-        objective, move = self.find_path_to_safe_food()
-        if not objective == None:
-            return (objective, move)
-        if self.samaritan.health <= risky_food_health_limit:
-            objective, move = self.find_path_to_risky_food()
+            return ('Death', 'left')
+        elif self.mode == 2:
+            objective, move, enemy_id = self.cornering_enemies()
             if not objective == None:
-                return (objective, move)
-        print "Finding My Tail"
-        objective, move = self.find_path_to_my_tail()
-        if not objective == None:
-            return (objective, move)
-        print "Stalling"
-        objective, move = stall(self)
-        if not objective == None:
-            return (objective, move)
-        return ("Death" , "left")
+                return (objective, move, enemy_id)
+            objective, move, enemy_id = self.trapping_enemies()
+            if not objective == None:
+                return (objective, move, enemy_id)
+            objective, move, enemy_id = self.walling_enemies()
+            if not objective == None:
+                return (objective, move, enemy_id)
+            return (None, None, None)
 
     def cornering_enemies(self):
         for snake in self.other_snakes:
-            i = 2
+            distance = 2
             neighbours = self.get_neighbours(snake.get_head(), snake)
             if len(neighbours) != 1:
                 continue
@@ -303,21 +332,19 @@ class Board(object):
             while len(neighbours) == 1:
                 prev_node = curr_node
                 curr_node = neighbours[0]
-                neighbours = self.get_neighbours(curr_node, snake, i)
-                i += 1
+                neighbours = self.get_neighbours(curr_node, snake, distance)
+                distance += 1
                 if prev_node in neighbours:
                     neighbours.remove(prev_node)
             exit_node = prev_node
             if len(neighbours) == 0:
-                continue        # He's trapped himself so you can't do anything.
-
+                continue
             enemy_cost, enemy_path = a_star(self, snake.get_head(), exit_node,
                                             snake)
             samaritan_cost, samaritan_path = a_star(self,
-                                                    self.samaritan.get_head(),
-                                                    exit_node,
-                                                    self.samaritan)
-            if samaritan_path == None:
+                                    self.samaritan.get_head(), exit_node,
+                                    self.samaritan)
+            if samaritan_cost == None or enemy_cost == None:
                 continue
             distance_of_enemy_to_exit = len(enemy_path) - 1
             distance_of_samaritan_to_exit = len(samaritan_path) - 1
@@ -325,8 +352,26 @@ class Board(object):
                 or (distance_of_samaritan_to_exit == distance_of_enemy_to_exit
                     and snake.length < self.samaritan.length)):
                 return ("Cornering", translate(self.samaritan.get_head(),
-                                               samaritan_path[1]))
-        return (None, None)
+                                               samaritan_path[1]), snake.id)
+            else:
+                exit_node = curr_node
+
+                enemy_cost, enemy_path = a_star(self, snake.get_head(), exit_node,
+                                                snake)
+                samaritan_cost, samaritan_path = a_star(self,
+                                                        self.samaritan.get_head(),
+                                                        exit_node,
+                                                        self.samaritan)
+                if samaritan_cost == None or enemy_cost == None:
+                    continue
+                distance_of_enemy_to_exit = len(enemy_path) - 1
+                distance_of_samaritan_to_exit = len(samaritan_path) - 1
+                if (distance_of_samaritan_to_exit < distance_of_enemy_to_exit
+                    or (distance_of_samaritan_to_exit == distance_of_enemy_to_exit
+                        and snake.length < self.samaritan.length)):
+                    return ("Cornering", translate(self.samaritan.get_head(),
+                                                   samaritan_path[1]), snake.id)
+        return (None, None, None)
 
     def trapping_enemies(self):
         for snake in self.other_snakes:
@@ -466,48 +511,48 @@ class Board(object):
                           and self.is_valid_move('left')):
                           move = 'left'
             if move is not None:
-                return ('Trapping', move)
+                return ('Trapping', move, snake.id)
 
-        return (None, None)
+        return (None, None, None)
 
     def walling_enemies(self):
+        if len(self.other_snakes) == 0:
+            return (None, None, None)
         neighbours = self.get_neighbours(self.samaritan.get_head(),
                                          self.samaritan)
         for neighbour in neighbours:
-            data_for_new_board = deepcopy(self.data)
+            food_coordinates = self.foods[:]
+            other_snakes = deepcopy(self.other_snakes)
+            samaritan = deepcopy(self.samaritan)
             start = self.samaritan.get_head()
             destination = neighbour
             distance_to_edge = 0
             direction = translate(start, destination)
             valid_move = True
             path_to_edge = [self.samaritan.get_head()]
-            foods_in_path = 0
-            food_on_last_node = False
+            foods = 0
+            health_loss = 0
             while valid_move:
-                food_on_last_node = False
+                target_x, target_y = destination
+                if self.grid[target_y][target_x] != EMPTY_SPACE_MAKERS:
+                    if destination in food_coordinates:
+                        food_coordinates.remove(destination)
+                        samaritan.health = 100
+                        foods += 1
+                        health_loss = 0
+                    else:
+                        if destination not in samaritan.coordinates:
+                            break
+                            # for snake in other_snakes:
+                            #     if destination in snake.coordinates:
+                            #         x = snake.coordinates.index(destination)
+                            #         if x == 0: # if it's the head of an enemy snake, then it's impossible to tell where that snake is going to go next.
+                            #             break
+                            #         snake.coordinates = snake.coordinates[:x]
                 path_to_edge.append(destination)
                 start = destination
                 distance_to_edge += 1
-                target_x, target_y = destination
-                if self.grid[target_y][target_x] != EMPTY_SPACE_MAKERS:
-                    if destination in self.foods:
-                        data_for_new_board['food']['data'].remove({
-                            "object": "point",
-                            "x": target_x,
-                            "y": target_y
-                        })
-                        data_for_new_board['you']['health'] = 100
-                        foods_in_path += 1
-                        food_on_last_node = True        # if there's a food on the last node it means the snake hasn't fully grown out.
-                    else:
-                        if destination not in self.samaritan.coordinates:
-                            for snake in self.other_snakes:
-                                if destination in snake.coordinates:
-                                    for x in range(len(data_for_new_board['snakes']['data'])):
-                                        if data_for_new_board['snakes']['data'][x]['id'] == snake.id:
-                                            for body_coord in data_for_new_board['snakes']['data'][x]['body']['data']:
-                                                if body_coord['x'] == target_x and body_coord['y'] == target_y:
-                                                    data_for_new_board['snakes']['data'][x]['body']['data'].remove(body_coord)
+                health_loss += 1
                 if direction == 'up':
                     destination = (target_x, target_y-1)
                 elif direction == 'down':
@@ -520,65 +565,41 @@ class Board(object):
                                                       destination[1],
                                                       self.samaritan,
                                                       distance_to_edge+1,
-                                                    foods_in_path=foods_in_path)
-            # at this point, a path to an edge will be formed, so we need to
-            # form data with a future samaritan who has followed this path
-            my_snake_coords = data_for_new_board['you']['body']['data']
+                                                      foods_in_path=foods)
+            samaritan.health -= health_loss
             new_snake_coords = []
-            if food_on_last_node:
-                data_for_new_board['you']['length'] = (self.samaritan.length
-                                                        + foods_in_path)
-                if (data_for_new_board['you']['length']-1) <= distance_to_edge:
-                    for x in range(data_for_new_board['you']['length']-1):
-                        # Our new snake coordinates will start with head on food.
+            if samaritan.health == 100:
+                samaritan.length += foods
+                if samaritan.length-1 <= distance_to_edge:
+                    for x in range(samaritan.length-1):
                         xcoord, ycoord = path_to_edge[-1-x]
-                        new_snake_coords.append({
-                            "object": "point",
-                            "x": xcoord,
-                            "y": ycoord
-                            })
+                        new_snake_coords.append((xcoord, ycoord))
+                    samaritan.coordinates = new_snake_coords
                 else:
-                    for x in range(distance_to_edge-(foods_in_path-1)):
-                        my_snake_coords.pop()
+                    for x in range(distance_to_edge-(foods-1)):
+                        samaritan.coordinates.pop()
                     for xcoord, ycoord in path_to_edge[1:]:
-                        my_snake_coords.insert(0, {
-                            "object": "point",
-                            "x": xcoord,
-                            "y": ycoord
-                            })
-                    new_snake_coords = my_snake_coords
-                    new_snake_coords.append(new_snake_coords[-1])
+                        samaritan.coordinates.insert(0, (xcoord, ycoord))
+                samaritan.coordinates.append(samaritan.coordinates[-1])
             else:
-                data_for_new_board['you']['length'] = (self.samaritan.length
-                                                        + foods_in_path)
-                if data_for_new_board['you']['length'] <= distance_to_edge:
-                    for x in range(data_for_new_board['you']['length']):
-                        # Our new snake coordinates will start with head on food.
+                samaritan.length += foods
+                if samaritan.length <= distance_to_edge:
+                    for x in range(samaritan.length):
                         xcoord, ycoord = path_to_edge[-1-x]
-                        new_snake_coords.append({
-                            "object": "point",
-                            "x": xcoord,
-                            "y": ycoord
-                            })
+                        new_snake_coords.append((xcoord, ycoord))
+                    samaritan.coordinates = new_snake_coords
                 else:
-                    for x in range(distance_to_edge-foods_in_path):
-                        my_snake_coords.pop()
+                    for x in range(distance_to_edge-foods):
+                        samaritan.coordinates.pop()
                     for xcoord, ycoord in path_to_edge[1:]:
-                        my_snake_coords.insert(0, {
-                            "object": "point",
-                            "x": xcoord,
-                            "y": ycoord
-                            })
-                    new_snake_coords = my_snake_coords
+                        samaritan.coordinates.insert(0, (xcoord, ycoord))
 
-            data_for_new_board['you']['body']['data'] = new_snake_coords
-            new_board = Board(data_for_new_board)
+            new_board = Board(self.generate_data_dictionary(food_coordinates,
+                                                    other_snakes, samaritan), 1)
             for x in range(len(new_board.other_snakes)):
                 enemy_snake = self.other_snakes[x]
                 new_board_area = new_board.area(enemy_snake)
                 current_board_area = self.area(enemy_snake)
-                print new_board_area
-                print current_board_area
                 if (new_board_area < current_board_area
                     and new_board_area <= enemy_snake.length):
                     can_wall_off_faster = True
@@ -596,8 +617,9 @@ class Board(object):
                               break
                     if can_wall_off_faster:
                         return ('Walling off', translate(
-                                self.samaritan.get_head(), path_to_edge[1]))
-        return (None, None)
+                                self.samaritan.get_head(), path_to_edge[1]),
+                                enemy_snake.id)
+        return (None, None, None)
 
     def find_path_to_safe_food(self):
         cost_and_path_to_all_foods = []
@@ -627,42 +649,40 @@ class Board(object):
                     continue
             if cost_of_food >= 6:
                 continue
-            data_for_new_board = deepcopy(self.data)        # this prevents changing self.data when changing the copy.
-            foods_in_path = 0
-            for food in data_for_new_board['food']['data'][:]:
-                if (food['x'], food['y']) in path_to_food:
-                    data_for_new_board['food']['data'].remove(food)
-                    foods_in_path += 1
-            data_for_new_board['you']['health'] = 100
-            my_snake_coords = data_for_new_board['you']['body']['data']
+            food_coordinates = self.foods[:]
+            other_snakes = deepcopy(self.other_snakes)
+            samaritan = deepcopy(self.samaritan)
+            foods = 0
+            for node_x, node_y in path_to_food[1:]:
+                if self.grid[node_y][node_x] != EMPTY_SPACE_MAKERS:
+                    if (node_x, node_y) in food_coordinates:
+                        food_coordinates.remove((node_x, node_y))
+                        foods += 1
+                    else:
+                        if (node_x, node_y) not in samaritan.coordinates:
+                            for snake in other_snakes:
+                                if (node_x, node_y) in snake.coordinates:
+                                    x = snake.coordinates.index((node_x, node_y))
+                                    if x == 0: # if it's the head of an enemy snake, then it's impossible to tell where that snake is going to go next.
+                                        break
+                                    snake.coordinates = snake.coordinates[:x]
+            samaritan.health = 100
             new_snake_coords = []
-            data_for_new_board['you']['length'] = self.samaritan.length + foods_in_path
-            if (data_for_new_board['you']['length']-1) <= actual_distance_to_food:
-                for x in range(data_for_new_board['you']['length']-1):
-                    # Our new snake coordinates will start with head on food.
+            samaritan.length += foods
+            if samaritan.length-1 <= actual_distance_to_food:
+                for x in range(samaritan.length-1):
                     xcoord, ycoord = path_to_food[-1-x]
-                    new_snake_coords.append({
-                      "object": "point",
-                      "x": xcoord,
-                      "y": ycoord
-                    })
+                    new_snake_coords.append((xcoord, ycoord))
+                samaritan.coordinates = new_snake_coords
             else:
-                for x in range(actual_distance_to_food-(foods_in_path-1)):
-                    my_snake_coords.pop()
+                for x in range(actual_distance_to_food-(foods-1)):
+                    samaritan.coordinates.pop()
                 for xcoord, ycoord in path_to_food[1:]:
-                    my_snake_coords.insert(0, {
-                      "object": "point",
-                      "x": xcoord,
-                      "y": ycoord
-                    })
-                new_snake_coords = my_snake_coords
-
-            new_snake_coords.append(new_snake_coords[-1])
-            data_for_new_board['you']['body']['data'] = new_snake_coords
-            board_after_samaritan_eats = Board(data_for_new_board)
-            objective, action = board_after_samaritan_eats.get_action()
-            # print objective
-            # print action
+                    samaritan.coordinates.insert(0, (xcoord, ycoord))
+            samaritan.coordinates.append(samaritan.coordinates[-1])
+            new_board = Board(self.generate_data_dictionary(food_coordinates,
+                                                    other_snakes, samaritan), 1)
+            objective, action = new_board.get_action()
             if objective == 'Death' or objective == 'Stalling':
                 continue
             else:
@@ -688,43 +708,40 @@ class Board(object):
             actual_distance_to_food = len(path_to_food) - 1
             if cost_of_food >= 12:
                 continue
-            data_for_new_board = deepcopy(self.data)        # this prevents changing self.data when changing the copy.
-            foods_in_path = 0
-            for food in data_for_new_board['food']['data'][:]:
-                if (food['x'], food['y']) in path_to_food:
-                    data_for_new_board['food']['data'].remove(food)
-                    foods_in_path += 1
-            data_for_new_board['you']['health'] = 100
-            data_for_new_board['you']['length'] = self.samaritan.length + foods_in_path
-            my_snake_coords = data_for_new_board['you']['body']['data']
+            food_coordinates = self.foods[:]
+            other_snakes = deepcopy(self.other_snakes)
+            samaritan = deepcopy(self.samaritan)
+            foods = 0
+            for node_x, node_y in path_to_food[1:]:
+                if self.grid[node_y][node_x] != EMPTY_SPACE_MAKERS:
+                    if (node_x, node_y) in food_coordinates:
+                        food_coordinates.remove((node_x, node_y))
+                        foods += 1
+                    else:
+                        if (node_x, node_y) not in samaritan.coordinates:
+                            for snake in other_snakes:
+                                if (node_x, node_y) in snake.coordinates:
+                                    x = snake.coordinates.index((node_x, node_y))
+                                    if x == 0: # if it's the head of an enemy snake, then it's impossible to tell where that snake is going to go next.
+                                        break
+                                    snake.coordinates = snake.coordinates[:x]
+            samaritan.health = 100
             new_snake_coords = []
-            if (data_for_new_board['you']['length']-1) <= actual_distance_to_food:
-                for x in range(data_for_new_board['you']['length']-1):
-                    # Our new snake coordinates will start with head on food.
+            samaritan.length += foods
+            if samaritan.length-1 <= actual_distance_to_food:
+                for x in range(samaritan.length-1):
                     xcoord, ycoord = path_to_food[-1-x]
-                    new_snake_coords.append({
-                      "object": "point",
-                      "x": xcoord,
-                      "y": ycoord
-                    })
+                    new_snake_coords.append((xcoord, ycoord))
+                samaritan.coordinates = new_snake_coords
             else:
-                for x in range(actual_distance_to_food-(foods_in_path-1)):
-                    my_snake_coords.pop()
+                for x in range(actual_distance_to_food-(foods-1)):
+                    samaritan.coordinates.pop()
                 for xcoord, ycoord in path_to_food[1:]:
-                    my_snake_coords.insert(0, {
-                      "object": "point",
-                      "x": xcoord,
-                      "y": ycoord
-                    })
-                new_snake_coords = my_snake_coords
-
-            # Since our length is going to increase by 1 after getting the food.
-            new_snake_coords.append(new_snake_coords[-1])
-            data_for_new_board['you']['body']['data'] = new_snake_coords
-            board_after_samaritan_eats = Board(data_for_new_board)
-            objective, action = board_after_samaritan_eats.get_action()
-            # print objective
-            # print action
+                    samaritan.coordinates.insert(0, (xcoord, ycoord))
+            samaritan.coordinates.append(samaritan.coordinates[-1])
+            new_board = Board(self.generate_data_dictionary(food_coordinates,
+                                                    other_snakes, samaritan), 1)
+            objective, action = new_board.get_action()
             if objective == 'Death' or objective == 'Stalling':
                 continue
             else:
@@ -733,71 +750,82 @@ class Board(object):
         return (None, None)
 
     def find_path_to_my_tail(self):
-        if (bfs(self, self.samaritan.get_head(), self.samaritan.get_tail(),
-                self.samaritan)):
-            cost_of_tail, path_to_tail = a_star(self,
-                                                self.samaritan.get_head(),
-                                                self.samaritan.get_tail(),
-                                                self.samaritan)
-            if path_to_tail == None:
-                return (None, None)
-            return ('Going To My Tail', translate(self.samaritan.get_head(),
-                               path_to_tail[1]))
-        else:
+        cost_of_tail, path_to_tail = a_star(self,
+                                            self.samaritan.get_head(),
+                                            self.samaritan.get_tail(),
+                                            self.samaritan)
+        if path_to_tail == None:
             return (None, None)
-
+        return ('Going To My Tail', translate(self.samaritan.get_head(),
+                           path_to_tail[1]))
     def attack_enemy(self):
-        distances_to_other_snakes = []
+        attack_points = []
         for snake in self.other_snakes:
-            heappush(distances_to_other_snakes,
-                     (get_manhattan_distance(self.samaritan.get_head(),
-                                             snake.get_head()), snake))
+            neighbours = self.get_neighbours(snake.get_head(), snake)
+            if len(neighbours) == 0:
+                continue
+            heappush(attack_points, (get_manhattan_distance(
+                        self.samaritan.get_head(), neighbours[0]), neighbours[0]))
 
-        while distances_to_other_snakes:
-            distance_to_snake, snake = heappop(distances_to_other_snakes)
-            if distance_to_snake <= 1:
-                if self.is_head_on_collision(self.samaritan, snake):
-                    continue
-                else:
-                    direction_of_enemy = translate(snake.coordinates[1],
-                                                   snake.get_head())
-                    if self.is_valid_move(direction_of_enemy):
-                        return ('Attacking', direction_of_enemy)
-                    else:
-                        continue
-            if (bfs(self, self.samaritan.get_head(), snake.get_head(),
-                    self.samaritan, snake.get_head())):
-                cost_of_enemy, path_to_enemy = a_star(self,
-                                                self.samaritan.get_head(),
-                                                snake.get_head(),
-                                                self.samaritan,
-                                                snake.get_head())
-                if cost_of_enemy >= 8:
-                    return (None, None)
-                # print path_to_enemy
-                if cost_of_enemy != None:
-                    return ('Attacking', translate(self.samaritan.get_head(),
-                                               path_to_enemy[1]))
+        while attack_points:
+            distance_to_attack_point, attack_point = heappop(attack_points)
+            cost_of_enemy, path_to_enemy = a_star(self,
+                                            self.samaritan.get_head(),
+                                            attack_point,
+                                            self.samaritan, 8)
+            if cost_of_enemy != None:
+                return ('Attacking', translate(self.samaritan.get_head(),
+                                           path_to_enemy[1]))
         return (None, None)
 
-    def is_head_on_collision(self, first_snake, second_snake):
-        '''Returns a boolean telling us if two snakes are going in the opposite
-        directions.
-        '''
-        first_node = first_snake.get_head()
-        second_node = first_snake.coordinates[1]
-        direction_of_first_snake = translate(second_node, first_node)
-        first_node = second_snake.get_head()
-        second_node = second_snake.coordinates[1]
-        direction_of_second_snake = translate(second_node, first_node)
-        return ((direction_of_first_snake == 'up' and
-                 direction_of_second_snake == 'down') or
-                (direction_of_first_snake == 'down' and
-                 direction_of_second_snake == 'up') or
-                (direction_of_first_snake == 'left' and
-                 direction_of_second_snake == 'right') or
-                (direction_of_first_snake == 'right' and
-                 direction_of_second_snake == 'left'))
+    def is_it_a_good_move(self, objective, move):
+        if len(self.other_snakes) == 0:
+            return True
+        samaritan = deepcopy(self.samaritan)
+        other_snakes = deepcopy(self.other_snakes)
+        foods = self.foods[:]
+        target_x, target_y = (None, None)
+        if move == 'up':
+            head_x, head_y = samaritan.get_head()
+            target_x, target_y = head_x, head_y-1
+        elif move == 'down':
+            head_x, head_y = samaritan.get_head()
+            target_x, target_y = head_x, head_y+1
+        elif move == 'left':
+            head_x, head_y = samaritan.get_head()
+            target_x, target_y = head_x-1, head_y
+        else:
+            head_x, head_y = samaritan.get_head()
+            target_x, target_y = head_x+1, head_y
+
+        samaritan.coordinates.insert(0, (target_x, target_y))
+        if (target_x, target_y) in foods:
+            foods.remove((target_x, target_y))
+        if samaritan.health != 100:
+            samaritan.coordinates.pop()
+
+        closest_snake = []
+        for snake in other_snakes:
+            heappush(closest_snake, (get_manhattan_distance(snake.get_head(),
+                                            samaritan.get_head()), snake))
+            neighbours = self.get_neighbours(snake.get_head(), snake)
+            if len(neighbours) == 0:
+                continue
+            snake.coordinates.insert(0, neighbours[0])
+            if snake.health != 100:
+                snake.coordinates.pop()
+
+        x, snake = heappop(closest_snake)
+        other_snakes.remove(snake)
+        other_snakes = other_snakes + [samaritan]
+        samaritan = snake
+        new_board = Board(self.generate_data_dictionary(foods, other_snakes,
+                                                        samaritan), 2)
+        objective, move, enemy_id = new_board.get_action()
+        if self.samaritan.id == enemy_id:
+            return False
+        else:
+            return True
 
     def is_valid_move(self, move, distance=1, start=None):
         '''Tells us if taking a certain move with Samaritan is valid.
@@ -818,4 +846,58 @@ class Board(object):
         return False
 
     def area(self, snake):
+        '''
+        Given a snake, returns the area around the snake by doing a floodfill.
+        '''
         return floodfill(self, snake)
+
+    def generate_data_dictionary(self, foods, enemies, samaritan):
+        '''
+        Given information about the coordinates of board entities, this function
+        generates a data dictionary so you can create another board object.
+        '''
+        data = {
+          "food": {
+            "data": []
+          },
+          "height": self.height,
+          "snakes": {
+            "data": []
+          },
+          "width": self.width,
+        }
+        for food_x, food_y in foods:
+            data['food']['data'].append({
+                "x": food_x,
+                "y": food_y
+            })
+
+        for x in range(len(enemies)):
+            data['snakes']['data'].append({
+              "body": {
+                "data": []
+              },
+              "health": enemies[x].health,
+              "id": enemies[x].id,
+              "length": enemies[x].length,
+             })
+            for coordinate_x, coordinate_y in enemies[x].coordinates:
+                data['snakes']['data'][x]['body']['data'].append({
+                    'x': coordinate_x,
+                    'y': coordinate_y
+                })
+
+        data['you'] = {
+            "body": {
+              "data": []
+            },
+            "health": samaritan.health,
+            "id": samaritan.id,
+            "length": samaritan.length,
+        }
+        for coordinate_x, coordinate_y in samaritan.coordinates:
+            data['you']['body']['data'].append({
+                'x': coordinate_x,
+                'y': coordinate_y
+            })
+        return data
