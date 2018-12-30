@@ -61,7 +61,7 @@ def move():
         }
 
 
-@bottle.post('/end')
+@bottle.get('/end')
 def end():
     '''This endpoint is hit when the game has ended.
     '''
