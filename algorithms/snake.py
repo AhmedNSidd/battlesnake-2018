@@ -11,6 +11,11 @@ class Snake(object):
         self.health = health
         self.length = length
 
+    def __str__(self):
+        s = "Snake's health is {}\nSize is {}\nCoordinates are {}".format(
+                                    self.health, self.length, self.coordinates)
+        return s
+
     def get_head(self):
         '''Returns head coords of Snake object
         '''
