@@ -23,22 +23,14 @@ def a_star(board, start, target, snake, cost_limit=99999):
                                           foods_in_path)
         for neighbour in neighbours:
             if not neighbour in processed:
-                if neighbour == target:
-                    heappush(p_q, (get_heuristic(neighbour, target)
-                                   + 1 + (path_cost - prev_heuristic),
-                                    path + [neighbour],
-                                    get_heuristic(neighbour, target),
-                                    (1 + foods_in_path if neighbour in board.foods
-                                    else foods_in_path)))
-                else:
-                    heappush(p_q, (get_heuristic(neighbour, target)
-                                   + board.get_cost(neighbour, len(path),
-                                                    foods_in_path)
-                                   + (path_cost - prev_heuristic),
-                                    path + [neighbour],
-                                    get_heuristic(neighbour, target),
-                                    (1 + foods_in_path if neighbour in board.foods
-                                    else foods_in_path)))
+                heappush(p_q, (get_heuristic(neighbour, target)
+                               + board.get_cost(neighbour, len(path),
+                                                foods_in_path)
+                               + (path_cost - prev_heuristic),
+                                path + [neighbour],
+                                get_heuristic(neighbour, target),
+                                (1 + foods_in_path if neighbour in board.foods
+                                else foods_in_path)))
     return (None, None)
 
 
@@ -86,6 +78,21 @@ def stall(board):
     return ('Stalling', translate(board.samaritan.get_head(), path[0]))
 
 def floodfill(board, snake):
+    processed = set()
+    start = snake.get_head()
+    to_be_processed = [(snake.get_head(), 0)]
+    while to_be_processed:
+        curr_node, length_of_path = to_be_processed.pop()
+        processed.add(curr_node)
+        neighbours = board.get_simple_neighbours(curr_node)
+        for neighbour in neighbours:
+            if neighbour not in processed:
+                to_be_processed.append((neighbour, length_of_path+1))
+    return len(processed) - 1
+
+def advanced_floodfill(board, snake):
+    '''Advanced version accounts for moving snakes
+    '''
     processed = set()
     start = snake.get_head()
     to_be_processed = [(snake.get_head(), 0)]
