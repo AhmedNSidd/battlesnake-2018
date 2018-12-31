@@ -41,7 +41,7 @@ class Board(object):
         self.mode = mode
         self.bad_moves = []
         self._mark_grid()
-        # self.print_grid()
+        self.print_grid()
 
 
     def _parse_data_list(self, data_list):
@@ -287,6 +287,16 @@ class Board(object):
                     # improvement.
                 if (self.samaritan.health <= health_limit
                     or not self.is_samaritan_biggest()):
+                    # or len(self.other_snakes) > 1
+                    # if (self.samaritan.health <= health_limit
+                    #     or self.samaritan.length < 4
+                    #     or len(self.other_snakes) == 1
+                    #     or self.samaritan.length % 2 != 0):
+                    #     if objective == None:
+                    #         objective, move = self.find_path_to_safe_food()
+                    #     if objective == None:
+                    #         objective, move = self.find_path_to_risky_food()
+                    # else:
                     if objective == None:
                         objective, move = self.find_path_to_safe_food()
                     if objective == None:
@@ -333,6 +343,8 @@ class Board(object):
             start = time.time()
             accessible_to_tail = a_star(self, samaritan.get_head(),
                                         samaritan.get_tail(), samaritan)
+            print samaritan
+            print accessible_to_tail, "A* TO TAIL"
             print (time.time() - start) * 1000, " after tail paranoia"
             if accessible_to_tail == (None, None):
                 return ('Walling off', 'right', samaritan.id)
@@ -887,10 +899,13 @@ class Board(object):
             target_x, target_y = head_x+1, head_y
 
         samaritan.coordinates.insert(0, (target_x, target_y))
+        samaritan.health -= 1
         if (target_x, target_y) in foods:
             foods.remove((target_x, target_y))
+            samaritan.coordinates.append(samaritan.coordinates[-1])
+            samaritan.health = 100
         samaritan.coordinates.pop()
-        samaritan.health -= 1
+
         closest_snake = []
         for snake in other_snakes:
             neighbours = self.get_neighbours(snake.get_head(), snake)
