@@ -3,8 +3,10 @@ import os
 from algorithms.board import Board
 import time
 from heapq import heappush, heappop
-file = None
-runtimes = []
+
+
+file = None         # the runtimes txt file
+runtimes = []       # a minheap used to store the runtimes of samaritan.
 
 @bottle.route('/')
 def static():
@@ -26,7 +28,7 @@ def static(path):
 def start():
     '''
     When a game starts, this endpoint is called and it gives the customization
-    information for Samaritan.
+    information for Samaritan. It also starts writing to the runtime text file.
     '''
     global file
     file = open("runtimes.txt", "a")
@@ -47,7 +49,8 @@ def move():
     When a game has started and the game server wants to know which direction
     I want to move in, this endpoint is hit as a POST request with data telling
     us about the game state (what the board looks like). We then figure out
-    what move and taunt we want to return.
+    what move and taunt we want to return by creating an instance of the game
+    state and getting an action for our snake, Samaritan.
     '''
     start = time.time()
     environment = Board(bottle.request.json)
@@ -63,7 +66,12 @@ def move():
 
 @bottle.get('/end')
 def end():
-    '''This endpoint is hit when the game has ended.
+    '''
+    This endpoint isn't hit until you go in the browser and manually hit it.
+    The reason you would want to do this is to store the runtimes in the text
+    file since samaritan.py was run. I list the runtimes from greatest to lowest
+    hence there is need to negate the runtimes since I am using a min-heap to
+    store the runtimes.
     '''
     global file
     total = 0
