@@ -1,4 +1,5 @@
 import snake
+import time
 from constants import (EMPTY_SPACE_MAKERS, FOOD_MARKER, SAMARITAN_HEAD_MARKER,
     SAMARITAN_BODY_MARKER, ENEMY_SNAKE_HEAD_MARKER, ENEMY_SNAKE_BODY_MARKER,
     SNAKE_TAIL_MARKER)
@@ -173,42 +174,49 @@ class Board(object):
 
     # TODO: Add feature to give costs depending on which snake is asking. (The
     # lack of this feature is why the beginning move is timely.)
-    def get_cost(self, node, distance_to_node, foods_in_path):
+    def get_cost(self, node, my_snake, distance_to_node, foods_in_path):
         '''
         Calculates the cost to travel to the node in the parameter depending on
         from which snake's perspective we are looking at it from.
         '''
         cost = 1
         if (distance_to_node == 1
-            and translate(self.samaritan.get_head(), node) in self.bad_moves):
+            and translate(my_snake.get_head(), node) in self.bad_moves):
+            print translate(my_snake.get_head(), node)
+            print self.bad_moves
             cost += 99999
         xcoord, ycoord = node
         if (xcoord == (self.width-1)
             or ycoord == (self.height-1)
             or xcoord == 0
             or ycoord == 0):
-            cost += 3
-            for snake in self.other_snakes:
-                if (get_manhattan_distance(snake.get_head(), node) <=
-                    distance_to_node + 2):
+            cost += 2
+            for snake in self.all_snake_objects():
+                if (snake != my_snake and
+                    get_manhattan_distance(snake.get_head(), node)
+                    <= distance_to_node + 2):
                     cost += 4
             if ((xcoord == (self.width-1) and ycoord == (self.height-1))
                 or (xcoord == (self.width-1) and ycoord == 0)
                 or (xcoord == 0 and ycoord == (self.height-1))
                 or (xcoord == 0 and ycoord == 0)):
-                cost += 1
+                cost += 2
             else:
                 if xcoord == self.width-1:
-                    if self.grid[ycoord][xcoord-1] == ENEMY_SNAKE_BODY_MARKER:
+                    if (self.grid[ycoord][xcoord-1] == ENEMY_SNAKE_BODY_MARKER
+                        and (xcoord-1, ycoord) not in my_snake.coordinates):
                         cost += 6
                 elif ycoord == self.height-1:
-                    if self.grid[ycoord-1][xcoord] == ENEMY_SNAKE_BODY_MARKER:
+                    if (self.grid[ycoord-1][xcoord] == ENEMY_SNAKE_BODY_MARKER
+                        and (xcoord, ycoord-1) not in my_snake.coordinates):
                         cost += 6
                 elif xcoord == 0:
-                      if self.grid[ycoord][xcoord+1] == ENEMY_SNAKE_BODY_MARKER:
+                      if (self.grid[ycoord][xcoord+1] == ENEMY_SNAKE_BODY_MARKER
+                          and (xcoord+1, ycoord) not in my_snake.coordinates):
                           cost += 6
                 elif ycoord == 0:
-                      if self.grid[ycoord+1][xcoord] == ENEMY_SNAKE_BODY_MARKER:
+                      if (self.grid[ycoord+1][xcoord] == ENEMY_SNAKE_BODY_MARKER
+                          and (xcoord, ycoord+1) not in my_snake.coordinates):
                           cost += 6
         neighbours = [
                 (xcoord+1, ycoord), (xcoord-1, ycoord),
@@ -220,15 +228,16 @@ class Board(object):
                 (xcoord+1, ycoord+1), (xcoord-1, ycoord-1),
                 (xcoord+1, ycoord-1), (xcoord-1, ycoord+1)
                 ]
-        valid_neighbours = self.get_neighbours(node, self.samaritan,
-                                               distance_to_node, foods_in_path)
+        valid_neighbours = self.get_neighbours(node, my_snake, distance_to_node,
+                                               foods_in_path)
         if (self.grid[ycoord][xcoord] == EMPTY_SPACE_MAKERS
             and len(valid_neighbours) == 0):
             cost += 999
-        for snake in self.other_snakes:
-            if (snake.get_head() in neighbours
-                and snake.length >= self.samaritan.length):
-                cost += 999
+        for snake in self.all_snake_objects():
+            if snake != my_snake:
+                if (snake.get_head() in neighbours
+                    and snake.length >= my_snake.length):
+                    cost += 999
         return cost
 
     def get_action(self):
@@ -353,8 +362,6 @@ class Board(object):
             samaritan_cost, samaritan_path = a_star(self,
                                     self.samaritan.get_head(), exit_node,
                                     self.samaritan)
-            print enemy_path
-            print samaritan_path
             if (samaritan_cost == None or enemy_cost == None
                 or len(samaritan_path) == 1):
                 continue
@@ -795,10 +802,12 @@ class Board(object):
     def find_path_to_my_tail(self):
         '''A* algorithm used by Samaritan to find a path to his tail.
         '''
+        print 'Checking path to tail'
         cost_of_tail, path_to_tail = a_star(self,
                                             self.samaritan.get_head(),
                                             self.samaritan.get_tail(),
                                             self.samaritan)
+        print 'path found: ', path_to_tail
         if path_to_tail == None or len(path_to_tail) == 1:
             return (None, None)
         return ('Going To My Tail', translate(self.samaritan.get_head(),
@@ -878,14 +887,14 @@ class Board(object):
         for x, snake in all_enemy_threats:
             new_samaritan = deepcopy(samaritan)
             new_other_snakes = deepcopy(other_snakes)
-            print new_other_snakes
             new_foods = foods[:]
             for a_snake in new_other_snakes:
                 if a_snake.id == snake.id:
                     new_other_snakes.remove(a_snake)
                     new_other_snakes = new_other_snakes + [new_samaritan]
                     new_samaritan = a_snake
-                    neighbours = self.get_neighbours(a_snake.get_head(), a_snake)
+                    neighbours = self.get_neighbours(a_snake.get_head(),
+                                                     a_snake)
                     if a_snake.health != 100:
                         a_snake.coordinates.pop()
                     coordinates = a_snake.coordinates[:]

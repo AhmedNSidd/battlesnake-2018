@@ -8,13 +8,15 @@ def a_star(board, start, target, snake, cost_limit=99999):
     shortest path from start to target with the lowest cost (least dangerous)
 
     It's different to A* in that it takes into account food on the path to the
-    destination and it also takes into account the dynamic nature of the game. 
+    destination and it also takes into account the dynamic nature of the game.
     '''
     p_q = [(get_heuristic(start, target), [start],
             get_heuristic(start, target), (1 if start in board.foods else 0))]
     processed = set()
     while p_q:
         path_cost, path, prev_heuristic, foods_in_path = heappop(p_q)
+        if target == board.samaritan.get_tail():
+            print path_cost, path
         if path_cost > cost_limit:
             continue
         curr_node = path[-1]
@@ -25,14 +27,14 @@ def a_star(board, start, target, snake, cost_limit=99999):
                                           foods_in_path)
         for neighbour in neighbours:
             if not neighbour in processed:
-                heappush(p_q, (get_heuristic(neighbour, target)
-                               + board.get_cost(neighbour, len(path),
-                                                foods_in_path)
-                               + (path_cost - prev_heuristic),
-                                path + [neighbour],
-                                get_heuristic(neighbour, target),
-                                (1 + foods_in_path if neighbour in board.foods
-                                else foods_in_path)))
+                new_cost = (get_heuristic(neighbour, target) + board.get_cost(
+                                neighbour, snake, len(path), foods_in_path) +
+                                (path_cost - prev_heuristic))
+                new_path = path + [neighbour]
+                curr_heuristic = get_heuristic(neighbour, target)
+                foods = (1 + foods_in_path if neighbour in board.foods
+                         else foods_in_path)
+                heappush(p_q, (new_cost, new_path, curr_heuristic, foods))
     return (None, None)
 
 def stall(board):
