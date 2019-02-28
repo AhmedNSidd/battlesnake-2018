@@ -1054,13 +1054,13 @@ class Board(object):
             })
 
         for x in range(len(enemies)):
-            data['snakes'].append({
+            data['board']['snakes'].append({
               "body": [],
               "health": enemies[x].health,
               "id": enemies[x].id,
              })
             for coordinate_x, coordinate_y in enemies[x].coordinates:
-                data['snakes'][x]['body'].append({
+                data['board']['snakes'][x]['body'].append({
                     'x': coordinate_x,
                     'y': coordinate_y
                 })
