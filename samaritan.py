@@ -34,7 +34,7 @@ def start():
     file = open("runtimes.txt", "a")
     file.write('Game runtime: ')
     return {
-        "color": "#ededed",
+        "color": "#D14F52",
         "secondary_color": "#ededed",
         "head_url": "https://i.ytimg.com/vi/er3BMWuf310/maxresdefault.jpg",
         "taunt": "Calculated.",
