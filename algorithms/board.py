@@ -37,7 +37,7 @@ class Board(object):
         self.foods = self._parse_data_list(data['board']['food'])
         self.samaritan = self._parse_snake_object(data['you'])
         self.other_snakes = [self._parse_snake_object(snake)
-                             for snake in data['snakes']
+                             for snake in data['board']['snakes']
                              if self.samaritan.id != snake['id']]
         self.mode = mode
         self.bad_moves = []
