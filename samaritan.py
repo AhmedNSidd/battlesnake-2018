@@ -59,8 +59,8 @@ def move():
     print time_in_ms
     heappush(runtimes, -time_in_ms)
     return {
-        'move': action,
-        'taunt': objective
+        'move': action
+        # 'taunt': objective
         }
 
 

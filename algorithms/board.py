@@ -31,13 +31,13 @@ class Board(object):
         defensive one.
         '''
         self.data = data
-        self.width = data['width']
-        self.height = data['height']
+        self.width = data['board']['width']
+        self.height = data['board']['height']
         self.grid = []
-        self.foods = self._parse_data_list(data['food']['data'])
+        self.foods = self._parse_data_list(data['board']['food'])
         self.samaritan = self._parse_snake_object(data['you'])
         self.other_snakes = [self._parse_snake_object(snake)
-                             for snake in data['snakes']['data']
+                             for snake in data['snakes']
                              if self.samaritan.id != snake['id']]
         self.mode = mode
         self.bad_moves = []
@@ -57,8 +57,8 @@ class Board(object):
         '''Returns a snake object given the JSON object from the API
         '''
         id = snake_object['id']
-        coords = self._parse_data_list(snake_object['body']['data'])
-        length = snake_object['length']
+        coords = self._parse_data_list(snake_object['body'])
+        length = len(coords)
         health = snake_object['health']
         return snake.Snake(id, coords, health, length)
 
