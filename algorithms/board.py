@@ -1039,46 +1039,39 @@ class Board(object):
         on that JSON request.
         '''
         data = {
-          "food": {
-            "data": []
-          },
-          "height": self.height,
-          "snakes": {
-            "data": []
-          },
-          "width": self.width,
+            "board": {
+                "height":self.height,
+                "width":self.width,
+                 "food":[],
+                 "snakes":[]
+            },
         }
+
         for food_x, food_y in foods:
-            data['food']['data'].append({
+            data['board']['food'].append({
                 "x": food_x,
                 "y": food_y
             })
 
         for x in range(len(enemies)):
-            data['snakes']['data'].append({
-              "body": {
-                "data": []
-              },
+            data['snakes'].append({
+              "body": [],
               "health": enemies[x].health,
               "id": enemies[x].id,
-              "length": enemies[x].length,
              })
             for coordinate_x, coordinate_y in enemies[x].coordinates:
-                data['snakes']['data'][x]['body']['data'].append({
+                data['snakes'][x]['body'].append({
                     'x': coordinate_x,
                     'y': coordinate_y
                 })
 
         data['you'] = {
-            "body": {
-              "data": []
-            },
+            "body": [],
             "health": samaritan.health,
             "id": samaritan.id,
-            "length": samaritan.length,
         }
         for coordinate_x, coordinate_y in samaritan.coordinates:
-            data['you']['body']['data'].append({
+            data['you']['body'].append({
                 'x': coordinate_x,
                 'y': coordinate_y
             })
