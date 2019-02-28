@@ -15,8 +15,8 @@ def a_star(board, start, target, snake, cost_limit=99999):
     processed = set()
     while p_q:
         path_cost, path, prev_heuristic, foods_in_path = heappop(p_q)
-        # if target == board.samaritan.get_tail():
-        #     print path_cost, path
+        # if target == board.other_snakes[-1].get_tail():
+        #     print path_cost, path, foods_in_path
         if path_cost > cost_limit:
             continue
         curr_node = path[-1]
