@@ -693,16 +693,15 @@ class Board(object):
         '''Used by Samaritan to find safe food.
         '''
         cost_and_path_to_all_foods = []
-        final_paths_to_food = []
         for food in self.foods:
-            heappush(cost_and_path_to_all_foods, (get_manhattan_distance(
-                                        self.samaritan.get_head(), food), food))
-            # enemy_distance_to_food = 0
-            # for snake in self.other_snakes:
-            #     enemy_distance_to_food -= get_manhattan_distance(
-            #                                         snake.get_head(), food)
-            #     heappush(cost_and_path_to_all_foods, (enemy_distance_to_food,
-            #                                           food))
+            max = -99999
+            for snake in self.other_snakes:
+                distance = get_manhattan_distance(self.samaritan.get_head(),
+                                                 food) - get_manhattan_distance(
+                                                    snake.get_head(), food)
+                if distance > max:
+                    max = distance
+            heappush(cost_and_path_to_all_foods, (max, food))
 
         while cost_and_path_to_all_foods:
             distance_to_food, food = heappop(cost_and_path_to_all_foods)
@@ -761,11 +760,9 @@ class Board(object):
             if distance_to_tail == None:
                 continue
 
-            heappush(final_paths_to_food, (distance_to_tail, translate(
-                                    self.samaritan.get_head(), food_path[1])))
+            return ('{} food'.format(risk), translate(
+                                    self.samaritan.get_head(), food_path[1]))
 
-        if final_paths_to_food:
-            return ('{} food'.format(risk), heappop(final_paths_to_food)[1])
         return (None, None)
 
     def find_path_to_my_tail(self):
