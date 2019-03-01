@@ -727,7 +727,7 @@ class Board(object):
             unsafe = False
             if risk == "Safe":
                 for snake in self.other_snakes:
-                    length, distance = bfs(self, snake.get_head(), food)
+                    length, distance = bfs(self, snake.get_head(), food, snake)
                     if (snake.length > self.samaritan.length
                         and length > actual_distance_to_food):
                         unsafe = True
