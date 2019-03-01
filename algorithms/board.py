@@ -402,7 +402,8 @@ class Board(object):
         #         return ('Walling off', 'right', samaritan.id) # if I can't access my own tail after I make my move, then return "walling off" to suggest that we shouldn't make this move.
 
     def cornering_enemies(self):
-        '''This attack tactic by samaritan corners an enemy if the enemy is
+        '''
+        This attack tactic by samaritan corners an enemy if the enemy is
         'going through a tunnel' i.e. there's only one valid move the enemy
         snake can do if it goes to that node. This typically occurs when an
         enemy is going along the edges.
@@ -823,8 +824,46 @@ class Board(object):
             cost, path_to_center = a_star(self, self.samaritan.get_head(),
                                                 center, self.samaritan)
             if cost != None:
-                return ("Going to center", translate(self.samaritan.get_head(),
-                                                     path_to_center[1]))
+                food_coordinates = self.foods[:]
+                other_snakes = deepcopy(self.other_snakes)
+                samaritan = deepcopy(self.samaritan)
+                foods = 0
+                for node_x, node_y in path_to_center[1:]:
+                    if self.grid[node_y][node_x] != EMPTY_SPACE_MAKERS:
+                        if (node_x, node_y) in food_coordinates:
+                            food_coordinates.remove((node_x, node_y))
+                            foods += 1
+                        else:
+                            if (node_x, node_y) not in samaritan.coordinates:
+                                for snake in other_snakes:
+                                    if (node_x, node_y) in snake.coordinates:
+                                        x = snake.coordinates.index((node_x,
+                                                                     node_y))
+                                        if x == 0:
+                                            break
+                                        snake.coordinates = snake.coordinates[:x]
+                new_snake_coords = []
+                samaritan.length += foods
+                if samaritan.length-1 <= actual_distance_to_food:
+                    for x in range(samaritan.length-1):
+                        xcoord, ycoord = path_to_center[-1-x]
+                        new_snake_coords.append((xcoord, ycoord))
+                    samaritan.coordinates = new_snake_coords
+                else:
+                    for x in range(actual_distance_to_food-(foods-1)):
+                        samaritan.coordinates.pop()
+                    for xcoord, ycoord in path_to_center[1:]:
+                        samaritan.coordinates.insert(0, (xcoord, ycoord))
+                samaritan.coordinates.append(samaritan.coordinates[-1])
+                new_board = Board(self.generate_data_dictionary(food_coordinates,
+                                                        other_snakes, samaritan), 1)
+                distance_to_tail, path_to_tail = bfs(new_board,
+                                                    new_board.samaritan.get_head(),
+                                                    new_board.samaritan.get_tail(),
+                                                    new_board.samaritan)
+                if distance_to_tail != None:
+                    return ("Going to center", translate(
+                                self.samaritan.get_head(),path_to_center[1]))
 
         cost_of_tail, path_to_tail = a_star(self,
                                             self.samaritan.get_head(),
