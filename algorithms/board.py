@@ -335,7 +335,7 @@ class Board(object):
             objective, move = stall(self)
         if objective == None:
             return ('Death', 'left')
-
+        return (objective, move)
 
 
         # if self.mode == 0:
