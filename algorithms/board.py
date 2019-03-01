@@ -350,10 +350,10 @@ class Board(object):
                         for neighbour in neighbours:
                             if neighbour not in self.bad_nodes:
                                 return ("Best Move",
-                                       self.translate(self.samaritan.get_head(),
-                                       neighbour))
-                        return ("Best Move", self.translate(
-                                    self.samaritan.get_head(), neighbours[0]))
+                                            translate(self.samaritan.get_head(),
+                                                      neighbour))
+                        return ("Best Move", translate(self.samaritan.get_head(),
+                                                       neighbours[0]))
                     else:
                         x, y = self.samaritan.get_head()
                         if move == 'right':
