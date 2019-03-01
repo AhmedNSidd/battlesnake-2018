@@ -62,8 +62,15 @@ def end():
 application = bottle.default_app()
 
 if __name__ == '__main__':
-    bottle.run(
-        application,
-        host=os.getenv('IP', '0.0.0.0'),
-        port=os.getenv('PORT', '8099'),
-        debug = True)
+    if os.environ.get('APP_LOCATION') == 'heroku':
+        bottle.run(
+            application,
+            host="0.0.0.0",
+            port=int(os.environ.get("PORT", 5000))
+        )
+    else:
+        bottle.run(
+            application,
+            host=os.getenv('IP', '0.0.0.0'),
+            port=os.getenv('PORT', '8099'),
+            debug = True)
