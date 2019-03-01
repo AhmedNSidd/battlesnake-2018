@@ -374,6 +374,9 @@ class Board(object):
             objective, move, enemy_id = self.trapping_enemies()
             if enemy_id == samaritan.id:
                 return (objective, move, enemy_id)
+            objective, move, enemy_id = self.walling_enemies()
+            if enemy_id == samaritan.id:
+                return (objective, move, enemy_id)
             return (None, None, None)
 
 
