@@ -290,6 +290,7 @@ class Board(object):
         - Food
         - Stalling
         '''
+        objective, move = None, None
         if len(self.other_snakes) == 0:
             health_limit = 70 # if i am playing alone, then get food more.
         else:
