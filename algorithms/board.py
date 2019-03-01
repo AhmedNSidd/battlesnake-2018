@@ -299,9 +299,8 @@ class Board(object):
                         objective, move = self.find_path_to_food('Risky')
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
-                elif (len(self.other_snakes) < 4 and
-                      (self.samaritan.length % 2 != 0
-                       or not self.is_samaritan_biggest())):
+                elif (self.samaritan.length % 2 != 0
+                       or not self.is_samaritan_biggest()):
                        print("Samaritan is prioritizing safety.")
                        if objective == None:
                            objective, move = self.find_path_to_food('Safe')
