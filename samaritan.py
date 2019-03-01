@@ -1,12 +1,7 @@
 import bottle
 import os
 from algorithms.board import Board
-import time
-from heapq import heappush, heappop
 
-
-file = None         # the runtimes txt file
-runtimes = []       # a minheap used to store the runtimes of samaritan.
 
 @bottle.route('/')
 def static():
@@ -18,11 +13,9 @@ def static():
     "monospace;}</style><h1>Samaritan is running...</h1><h3>A snake created"\
     " by Ahmed Siddiqui</h3></body></html>"
 
-
 @bottle.route('/static/<path:path>')
 def static(path):
     return bottle.static_file(path, root='static/')
-
 
 @bottle.post('/start')
 def start():
@@ -30,9 +23,6 @@ def start():
     When a game starts, this endpoint is called and it gives the customization
     information for Samaritan. It also starts writing to the runtime text file.
     '''
-    global file
-    file = open("runtimes.txt", "a")
-    file.write('Game runtime: ')
     return {
         "color": "#D14F52",
         "secondary_color": "#ededed",
@@ -41,7 +31,6 @@ def start():
         "head_type": "smile",
         "tail_type": "freckled"
         }
-
 
 @bottle.post('/move')
 def move():
@@ -52,17 +41,12 @@ def move():
     what move and taunt we want to return by creating an instance of the game
     state and getting an action for our snake, Samaritan.
     '''
-    start = time.time()
     environment = Board(bottle.request.json)
     objective, action = environment.get_action()
-    time_in_ms = (time.time() - start) * 1000
-    print time_in_ms
-    heappush(runtimes, -time_in_ms)
     return {
-        'move': action
-        # 'taunt': objective
+        'move': action,
+        'taunt': objective
         }
-
 
 @bottle.get('/end')
 def end():
@@ -73,21 +57,7 @@ def end():
     hence there is need to negate the runtimes since I am using a min-heap to
     store the runtimes.
     '''
-    global file
-    total = 0
-    number_of_runtimes = 0
-    while runtimes:
-        time_in_ms = heappop(runtimes)
-        time_in_ms = -time_in_ms
-        total += time_in_ms
-        number_of_runtimes += 1
-        string = "" + str(time_in_ms) + " "
-        file.write(string)
-    average = total / number_of_runtimes
-    string = " Average is " + str(average)
-    file.write(string)
-    file.write('\n')
-    file.close()
+    pass
 
 application = bottle.default_app()
 
