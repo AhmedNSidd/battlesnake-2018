@@ -201,6 +201,22 @@ class Board(object):
             cost += 99999
         for snake in self.all_snake_objects():
             if snake != my_snake:
+                if snake.length >= my_snake.length:
+                    enemy_neighbours = self.get_neighbours(node, snake)
+                    for x, y in enemy_neighbours:
+                        trajectory = translate(snake.get_head(), (x, y))
+                        if (trajectory == 'down' and (node == (x-1, y+1) or
+                            node == (x+1, y+1))):
+                            cost += 5
+                        elif (trajectory == 'up' and (node == (x-1, y-1) or
+                            node == (x+1, y-1))):
+                            cost += 5
+                        elif (trajectory == 'left' and (node == (x-1, y-1) or
+                            node == (x-1, y+1))):
+                            cost += 5
+                        elif (trajectory == 'right' and (node == (x+1, y-1) or
+                            node == (x+1, y+1))):
+                            cost += 5
                 if (snake.get_head() in neighbours
                     and snake.length >= my_snake.length):
                     cost += 10
