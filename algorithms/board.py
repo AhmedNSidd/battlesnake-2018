@@ -179,7 +179,7 @@ class Board(object):
         Costs are rated from a scale of 1-10 with the only exception being if
         we have predetermined that it's a bad move through paranoid algorithms
         '''
-        # xcoord, ycoord = node
+        xcoord, ycoord = node
         cost = 1
         # neighbours = [
         #         (xcoord+1, ycoord), (xcoord-1, ycoord),
@@ -192,36 +192,36 @@ class Board(object):
         if (distance_to_node == 1
             and translate(my_snake.get_head(), node) in self.bad_moves):
             cost += 99999
-        # for snake in self.all_snake_objects():
-        #     if snake != my_snake:
-        #         if snake.length >= my_snake.length:
-        #             enemy_neighbours = self.get_neighbours(node, snake)
-        #             for x, y in enemy_neighbours:
-        #                 trajectory = translate(snake.get_head(), (x, y))
-        #                 if (trajectory == 'down' and (node == (x-1, y+1) or
-        #                     node == (x+1, y+1))):
-        #                     if snake.length > my_snake.length:
-        #                         cost += 10
-        #                     else:
-        #                         cost += 3
-        #                 elif (trajectory == 'up' and (node == (x-1, y-1) or
-        #                     node == (x+1, y-1))):
-        #                     if snake.length > my_snake.length:
-        #                         cost += 10
-        #                     else:
-        #                         cost += 3
-        #                 elif (trajectory == 'left' and (node == (x-1, y-1) or
-        #                     node == (x-1, y+1))):
-        #                     if snake.length > my_snake.length:
-        #                         cost += 10
-        #                     else:
-        #                         cost += 3
-        #                 elif (trajectory == 'right' and (node == (x+1, y-1) or
-        #                     node == (x+1, y+1))):
-        #                     if snake.length > my_snake.length:
-        #                         cost += 10
-        #                     else:
-        #                         cost += 3
+        for snake in self.all_snake_objects():
+            if snake != my_snake:
+                if snake.length >= my_snake.length:
+                    enemy_neighbours = self.get_neighbours(node, snake)
+                    for x, y in enemy_neighbours:
+                        trajectory = translate(snake.get_head(), (x, y))
+                        if (trajectory == 'down' and (node == (x-1, y+1) or
+                            node == (x+1, y+1))):
+                            if snake.length > my_snake.length:
+                                cost += 5
+                            else:
+                                cost += 2
+                        elif (trajectory == 'up' and (node == (x-1, y-1) or
+                            node == (x+1, y-1))):
+                            if snake.length > my_snake.length:
+                                cost += 5
+                            else:
+                                cost += 2
+                        elif (trajectory == 'left' and (node == (x-1, y-1) or
+                            node == (x-1, y+1))):
+                            if snake.length > my_snake.length:
+                                cost += 5
+                            else:
+                                cost += 2
+                        elif (trajectory == 'right' and (node == (x+1, y-1) or
+                            node == (x+1, y+1))):
+                            if snake.length > my_snake.length:
+                                cost += 5
+                            else:
+                                cost += 2
         #         if (snake.get_head() in neighbours
         #             and snake.length > my_snake.length):
         #             cost += 10
@@ -239,11 +239,9 @@ class Board(object):
         #                                            snake.get_tail())):
         #                     cost += 10
         #
-        # if (xcoord == (self.width-1)
-        #     or ycoord == (self.height-1)
-        #     or xcoord == 0
-        #     or ycoord == 0): # node is on the edges
-        #     cost += 1
+        if (xcoord == (self.width-1) or ycoord == (self.height-1) or xcoord == 0
+            or ycoord == 0): # node is on the edges
+            cost += 1
         #     if my_snake != self.samaritan:
         #         return cost
         #     for snake in self.all_snake_objects():
