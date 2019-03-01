@@ -835,7 +835,7 @@ class Board(object):
         halfway_x = int((self.width-1)/2)
         halfway_y = int((self.height-1)/2)
         center = (halfway_x, halfway_y)
-        if (get_manhattan_distance(self.samaritan.get_head(), center) > halfway_x):
+        if (get_manhattan_distance(self.samaritan.get_head(), center) > int(halfway_x/2)):
             cost, path_to_center = a_star(self, self.samaritan.get_head(),
                                                 center, self.samaritan)
             if cost != None:
