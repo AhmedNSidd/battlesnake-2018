@@ -201,27 +201,27 @@ class Board(object):
                         if (trajectory == 'down' and (node == (x-1, y+1) or
                             node == (x+1, y+1))):
                             if snake.length > my_snake.length:
-                                cost += 5
+                                cost += 15
                             else:
-                                cost += 2
+                                cost += 5
                         elif (trajectory == 'up' and (node == (x-1, y-1) or
                             node == (x+1, y-1))):
                             if snake.length > my_snake.length:
-                                cost += 5
+                                cost += 15
                             else:
-                                cost += 2
+                                cost += 5
                         elif (trajectory == 'left' and (node == (x-1, y-1) or
                             node == (x-1, y+1))):
                             if snake.length > my_snake.length:
-                                cost += 5
+                                cost += 15
                             else:
-                                cost += 2
+                                cost += 5
                         elif (trajectory == 'right' and (node == (x+1, y-1) or
                             node == (x+1, y+1))):
                             if snake.length > my_snake.length:
-                                cost += 5
+                                cost += 15
                             else:
-                                cost += 2
+                                cost += 5
         #         if (snake.get_head() in neighbours
         #             and snake.length > my_snake.length):
         #             cost += 10
