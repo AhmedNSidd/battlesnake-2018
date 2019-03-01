@@ -291,34 +291,32 @@ class Board(object):
                         objective, move, enemy_id = self.trapping_enemies()
                     if objective == None:
                         objective, move, enemy_id = self.walling_enemies()
-                if (self.samaritan.health <= health_limit
-                    or self.samaritan.length % 2 != 0):
-                    print("Samaritan is prioritizing food.")
+                if (self.samaritan.health <= health_limit):
+                    print("Samaritan's health is low.")
                     if objective == None:
-                        objective, move = self.find_path_to_food('Safe')
+                        objective, move = self.find_path_to_safe_food()
                     if objective == None:
-                        objective, move = self.find_path_to_food('Risky')
+                        objective, move = self.find_path_to_risky_food()
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
-                elif (self.is_samaritan_biggest()
-                      and len(self.other_snakes) < 4):
-                      print("We are the biggest, and we don't need food. Attack.")
-                      if objective == None:
-                          objective, move = self.attack_enemy()
-                      if objective == None:
-                          objective, move = self.find_path_to_my_tail()
-                      if objective == None:
-                          objective, move = self.find_path_to_food('Safe')
-                      if objective == None:
-                          objective, move = self.find_path_to_food('Risky')
+                elif not self.is_samaritan_biggest():
+                    print("Samaritan isn't the biggest; Prioritizing food.")
+                    if objective == None:
+                        objective, move = self.find_path_to_safe_food()
+                    if objective == None:
+                        objective, move = self.find_path_to_risky_food()
+                    if objective == None:
+                        objective, move = self.find_path_to_my_tail()
                 else:
-                    print("Samaritan is prioritizing safety.")
+                    print("We are the biggest, and we don't need food. Attack.")
+                    if objective == None:
+                        objective, move = self.attack_enemy()
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
                     if objective == None:
-                        objective, move = self.find_path_to_food('Safe')
+                        objective, move = self.find_path_to_safe_food()
                     if objective == None:
-                        objective, move = self.find_path_to_food('Risky')
+                        objective, move = self.find_path_to_risky_food()
                 if objective == None:
                     objective, move = stall(self)
                 if objective != None:
