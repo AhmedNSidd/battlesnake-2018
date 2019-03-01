@@ -200,28 +200,36 @@ class Board(object):
                         trajectory = translate(snake.get_head(), (x, y))
                         if (trajectory == 'down' and (node == (x-1, y+1) or
                             node == (x+1, y+1))):
+                            if DEBUG:
+                                print("Risky node")
                             if snake.length > my_snake.length:
-                                cost += 15
+                                cost += 25
                             else:
-                                cost += 5
+                                cost += 10
                         elif (trajectory == 'up' and (node == (x-1, y-1) or
                             node == (x+1, y-1))):
+                            if DEBUG:
+                                print("Risky node")
                             if snake.length > my_snake.length:
-                                cost += 15
+                                cost += 25
                             else:
-                                cost += 5
+                                cost += 10
                         elif (trajectory == 'left' and (node == (x-1, y-1) or
                             node == (x-1, y+1))):
+                            if DEBUG:
+                                print("Risky node")
                             if snake.length > my_snake.length:
-                                cost += 15
+                                cost += 25
                             else:
-                                cost += 5
+                                cost += 10
                         elif (trajectory == 'right' and (node == (x+1, y-1) or
                             node == (x+1, y+1))):
+                            if DEBUG:
+                                print("Risky node")                            
                             if snake.length > my_snake.length:
-                                cost += 15
+                                cost += 25
                             else:
-                                cost += 5
+                                cost += 10
         #         if (snake.get_head() in neighbours
         #             and snake.length > my_snake.length):
         #             cost += 10
