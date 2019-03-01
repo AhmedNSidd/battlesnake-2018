@@ -832,6 +832,16 @@ class Board(object):
         '''A* algorithm used by Samaritan to find a path to his tail.
         '''
         # print 'Checking path to tail'
+        halfway_x = int((self.width-1)/2)
+        halfway_y = int((self.height-1)/2)
+        center = (halfway_x, halfway_y)
+        if (get_manhattan_distance(self.samaritan.get_head(), center) > halfway_x):
+            cost, path_to_center = a_star(self, self.samaritan.get_head(),
+                                                center, self.samaritan)
+            if cost != None:
+                return ("Going to center", translate(self.samaritan.get_head(),
+                                                     path_to_center[1]))
+
         cost_of_tail, path_to_tail = a_star(self,
                                             self.samaritan.get_head(),
                                             self.samaritan.get_tail(),
