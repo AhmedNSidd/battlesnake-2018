@@ -12,6 +12,9 @@ class Snake(object):
         self.health = health
         self.length = length
 
+    def __lt__(self, other):
+        return self.length < other.length
+
     def __str__(self):
         s = "Snake's health is {}\nSize is {}\nCoordinates are {}".format(
                                     self.health, self.length, self.coordinates)

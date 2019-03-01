@@ -96,7 +96,7 @@ class Board(object):
         '''
         for row in self.grid:
             for point in row:
-                print(point, end='')
+                print(point, end=' ')
             print()
         print()
 
