@@ -39,7 +39,7 @@ class Board(object):
                              for snake in data['board']['snakes']
                              if self.samaritan.id != snake['id']]
         self.mode = mode
-        self.bad_moves = []
+        self.bad_nodes = []
         self._mark_grid()
         if DEBUG and mode == 0:
             self.print_grid()
@@ -291,61 +291,87 @@ class Board(object):
         - Stalling
         '''
         if self.mode == 0:
-            objective, move = None, None
-            if len(self.other_snakes) == 0:
-                health_limit = 70 # if i am playing alone, then get food more.
-            else:
-                health_limit = 40
-            if objective == None:
-                objective, move, enemy_id = self.cornering_enemies()
-            if objective == None:
-                objective, move, enemy_id = self.trapping_enemies()
-            if objective == None:
-                objective, move, enemy_id = self.walling_enemies()
-            if (self.samaritan.health <= health_limit):
-                print("Samaritan's health is low.")
-                if objective == None:
-                    objective, move = self.find_path_to_food("Safe")
-                if objective == None:
-                    objective, move = self.find_path_to_food("Risky")
-                if self.is_samaritan_biggest():
-                    if objective == None:
-                        objective, move = self.attack_enemy()
+            i = -1
+            while True:
+                i = i + 1
+                objective, move = None, None
+                if len(self.other_snakes) == 0:
+                    health_limit = 70 # if i am playing alone, then get food more.
                 else:
+                    health_limit = 40
+                if i == 0:
+                    if objective == None:
+                        objective, move, enemy_id = self.cornering_enemies()
+                    if objective == None:
+                        objective, move, enemy_id = self.trapping_enemies()
+                    if objective == None:
+                        objective, move, enemy_id = self.walling_enemies()
+                if (self.samaritan.health <= health_limit):
+                    print("Samaritan's health is low.")
+                    if objective == None:
+                        objective, move = self.find_path_to_food("Safe")
+                    if objective == None:
+                        objective, move = self.find_path_to_food("Risky")
+                    if self.is_samaritan_biggest():
+                        if objective == None:
+                            objective, move = self.attack_enemy()
+                    else:
+                        if objective == None:
+                            objective, move = self.find_path_to_my_tail()
+                elif not self.is_samaritan_biggest():
+                    print("Samaritan isn't the biggest; Prioritizing food.")
+                    if objective == None:
+                        objective, move = self.find_path_to_food("Safe")
+                    if objective == None:
+                        objective, move = self.find_path_to_food("Risky")
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
-            elif not self.is_samaritan_biggest():
-                print("Samaritan isn't the biggest; Prioritizing food.")
+                else:
+                    print("We are the biggest, and we don't need food. Attack.")
+                    if objective == None:
+                        objective, move = self.find_path_to_food("Safe")
+                    if objective == None:
+                        objective, move = self.attack_enemy()
+                    if objective == None:
+                        objective, move = self.find_path_to_my_tail()
+                    if objective == None:
+                        objective, move = self.find_path_to_food("Risky")
                 if objective == None:
-                    objective, move = self.find_path_to_food("Safe")
+                    objective, move = stall(self)
                 if objective == None:
-                    objective, move = self.find_path_to_food("Risky")
-                if objective == None:
-                    objective, move = self.find_path_to_my_tail()
-            else:
-                print("We are the biggest, and we don't need food. Attack.")
-                if objective == None:
-                    objective, move = self.find_path_to_food("Safe")
-                if objective == None:
-                    objective, move = self.attack_enemy()
-                if objective == None:
-                    objective, move = self.find_path_to_my_tail()
-                if objective == None:
-                    objective, move = self.find_path_to_food("Risky")
-            if objective == None:
-                objective, move = stall(self)
-            if objective == None:
-                return ('Death', 'left')
-            return (objective, move)
+                    return ('Death', 'left')
+                e_objective, e_move, snake = self.get_best_enemy_attack(
+                                                    objective, move)
+                if e_objective != None:
+                    if i >= 2:
+                        # too many iterations. No safe node.
+                        neighbours = self.get_neighbours(
+                                      self.samaritan.get_head(), self.samaritan)
+                        for neighbour in neighbours:
+                            if neighbour not in self.bad_nodes:
+                                return ("Best Move",
+                                       self.translate(self.samaritan.get_head(),
+                                       neighbour))
+                        return ("Best Move", self.translate(
+                                    self.samaritan.get_head(), neighbours[0]))
+                    else:
+                        x, y = self.samaritan.get_head()
+                        if move == 'right':
+                            self.bad_nodes.append((x+1, y))
+                        elif move == 'left':
+                            self.bad_nodes.append((x-1, y))
+                        elif move == 'up':
+                            self.bad_nodes.append((x, y+1))
+                        elif move == 'down':
+                            self.bad_nodes.append((x, y-1))
+                        continue
+                return (objective, move)
         else:
             samaritan = self.other_snakes[-1]
             objective, move, enemy_id = self.cornering_enemies()
             if enemy_id == samaritan.id:
                 return (objective, move, enemy_id)
             objective, move, enemy_id = self.trapping_enemies()
-            if enemy_id == samaritan.id:
-                return (objective, move, enemy_id)
-            objective, move, enemy_id = self.walling_enemies()
             if enemy_id == samaritan.id:
                 return (objective, move, enemy_id)
             return (None, None, None)
@@ -367,9 +393,8 @@ class Board(object):
         #         #         print("My move is", objective, move)
         #         #     if len(self.other_snakes) == 0:
         #         #         return (objective, move)
-        #         #     e_objective, e_move, snake = self.get_best_enemy_attack(
-        #         #                                         objective, move)
-        #         #     if DEBUG:
+
+                    # if DEBUG:
         #         #         print("The counter move is", e_objective, e_move)
         #         #     if e_objective == None:
         #         #         return (objective, move)
