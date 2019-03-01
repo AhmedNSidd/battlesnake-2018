@@ -290,52 +290,66 @@ class Board(object):
         - Food
         - Stalling
         '''
-        objective, move = None, None
-        if len(self.other_snakes) == 0:
-            health_limit = 70 # if i am playing alone, then get food more.
-        else:
-            health_limit = 40
-        if objective == None:
-            objective, move, enemy_id = self.cornering_enemies()
-        if objective == None:
-            objective, move, enemy_id = self.trapping_enemies()
-        if objective == None:
-            objective, move, enemy_id = self.walling_enemies()
-        if (self.samaritan.health <= health_limit):
-            print("Samaritan's health is low.")
-            if objective == None:
-                objective, move = self.find_path_to_food("Safe")
-            if objective == None:
-                objective, move = self.find_path_to_food("Risky")
-            if self.is_samaritan_biggest():
-                if objective == None:
-                    objective, move = self.attack_enemy()
+        if mode == 0:
+            objective, move = None, None
+            if len(self.other_snakes) == 0:
+                health_limit = 70 # if i am playing alone, then get food more.
             else:
+                health_limit = 40
+            if objective == None:
+                objective, move, enemy_id = self.cornering_enemies()
+            if objective == None:
+                objective, move, enemy_id = self.trapping_enemies()
+            if objective == None:
+                objective, move, enemy_id = self.walling_enemies()
+            if (self.samaritan.health <= health_limit):
+                print("Samaritan's health is low.")
+                if objective == None:
+                    objective, move = self.find_path_to_food("Safe")
+                if objective == None:
+                    objective, move = self.find_path_to_food("Risky")
+                if self.is_samaritan_biggest():
+                    if objective == None:
+                        objective, move = self.attack_enemy()
+                else:
+                    if objective == None:
+                        objective, move = self.find_path_to_my_tail()
+            elif not self.is_samaritan_biggest():
+                print("Samaritan isn't the biggest; Prioritizing food.")
+                if objective == None:
+                    objective, move = self.find_path_to_food("Safe")
+                if objective == None:
+                    objective, move = self.find_path_to_food("Risky")
                 if objective == None:
                     objective, move = self.find_path_to_my_tail()
-        elif not self.is_samaritan_biggest():
-            print("Samaritan isn't the biggest; Prioritizing food.")
+            else:
+                print("We are the biggest, and we don't need food. Attack.")
+                if objective == None:
+                    objective, move = self.find_path_to_food("Safe")
+                if objective == None:
+                    objective, move = self.attack_enemy()
+                if objective == None:
+                    objective, move = self.find_path_to_my_tail()
+                if objective == None:
+                    objective, move = self.find_path_to_food("Risky")
             if objective == None:
-                objective, move = self.find_path_to_food("Safe")
+                objective, move = stall(self)
             if objective == None:
-                objective, move = self.find_path_to_food("Risky")
-            if objective == None:
-                objective, move = self.find_path_to_my_tail()
+                return ('Death', 'left')
+            return (objective, move)
         else:
-            print("We are the biggest, and we don't need food. Attack.")
-            if objective == None:
-                objective, move = self.find_path_to_food("Safe")
-            if objective == None:
-                objective, move = self.attack_enemy()
-            if objective == None:
-                objective, move = self.find_path_to_my_tail()
-            if objective == None:
-                objective, move = self.find_path_to_food("Risky")
-        if objective == None:
-            objective, move = stall(self)
-        if objective == None:
-            return ('Death', 'left')
-        return (objective, move)
+            samaritan = self.other_snakes[-1]
+            objective, move, enemy_id = self.cornering_enemies()
+            if enemy_id == samaritan.id:
+                return (objective, move, enemy_id)
+            objective, move, enemy_id = self.trapping_enemies()
+            if enemy_id == samaritan.id:
+                return (objective, move, enemy_id)
+            objective, move, enemy_id = self.walling_enemies()
+            if enemy_id == samaritan.id:
+                return (objective, move, enemy_id)
+            return (None, None, None)
+
 
 
         # if self.mode == 0:
@@ -369,21 +383,11 @@ class Board(object):
         #         #     return ('Death', 'left')
         #     return (objective, move)
         # elif self.mode == 2:
-        #     samaritan = self.other_snakes[-1]
+
         #     accessible_to_tail = a_star(self, samaritan.get_head(),
         #                                 samaritan.get_tail(), samaritan)
         #     if accessible_to_tail == (None, None):
         #         return ('Walling off', 'right', samaritan.id) # if I can't access my own tail after I make my move, then return "walling off" to suggest that we shouldn't make this move.
-        #     objective, move, enemy_id = self.cornering_enemies()
-        #     if not objective == None:
-        #         return (objective, move, enemy_id)
-        #     objective, move, enemy_id = self.trapping_enemies()
-        #     if not objective == None:
-        #         return (objective, move, enemy_id)
-        #     objective, move, enemy_id = self.walling_enemies()
-        #     if not objective == None:
-        #         return (objective, move, enemy_id)
-        #     return (None, None, None)
 
     def cornering_enemies(self):
         '''This attack tactic by samaritan corners an enemy if the enemy is
