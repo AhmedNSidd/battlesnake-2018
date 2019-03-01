@@ -713,17 +713,15 @@ class Board(object):
                 space_of_enemy_to_food = get_manhattan_distance(
                                                     snake.get_head(), food)
                 heappush(spaces_of_enemy_to_food, space_of_enemy_to_food)
-                if space_of_enemy_to_food < distance_to_food:
-                    continue
             food_cost, food_path = a_star(self, self.samaritan.get_head(),
                                                 food, self.samaritan,
                                                 self.max_cost_to_food(risk))
             if food_cost == None:
                 continue
             actual_distance_to_food = len(food_path) - 1
-            # if len(self.other_snakes) != 0:
-            #     if heappop(spaces_of_enemy_to_food) <= actual_distance_to_food:
-            #         continue
+            if len(self.other_snakes) != 0 and risk == "Safe":
+                if heappop(spaces_of_enemy_to_food) <= actual_distance_to_food:
+                    continue
             food_coordinates = self.foods[:]
             other_snakes = deepcopy(self.other_snakes)
             samaritan = deepcopy(self.samaritan)
