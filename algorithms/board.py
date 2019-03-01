@@ -39,7 +39,7 @@ class Board(object):
                              for snake in data['board']['snakes']
                              if self.samaritan.id != snake['id']]
         self.mode = mode
-        self.bad_nodes = []
+        self.bad_moves = []
         self._mark_grid()
         if DEBUG and mode == 0:
             self.print_grid()
@@ -180,7 +180,7 @@ class Board(object):
         we have predetermined that it's a bad move through paranoid algorithms
         '''
         # xcoord, ycoord = node
-        # cost = 1
+        cost = 1
         # neighbours = [
         #         (xcoord+1, ycoord), (xcoord-1, ycoord),
         #         (xcoord, ycoord+1), (xcoord, ycoord-1)
@@ -189,12 +189,9 @@ class Board(object):
         # vertical_neighbours = neighbours[2:]
         # valid_neighbours = self.get_neighbours(node, my_snake, distance_to_node,
         #                                        foods_in_path)
-        # if (distance_to_node == 1
-        #     and translate(my_snake.get_head(), node) in self.bad_moves):
-        #     if DEBUG:
-        #         print(translate(my_snake.get_head(), node))
-        #         print(self.bad_moves)
-        #     cost += 99999
+        if (distance_to_node == 1
+            and translate(my_snake.get_head(), node) in self.bad_moves):
+            cost += 99999
         # for snake in self.all_snake_objects():
         #     if snake != my_snake:
         #         if snake.length >= my_snake.length:
@@ -276,7 +273,7 @@ class Board(object):
         #               if (self.grid[ycoord+1][xcoord] == ENEMY_SNAKE_BODY_MARKER
         #                   and (xcoord, ycoord+1) not in my_snake.coordinates):
         #                   cost += 6
-        return 1
+        return cost
 
     def get_action(self):
         '''
@@ -340,32 +337,19 @@ class Board(object):
                     objective, move = stall(self)
                 if objective == None:
                     return ('Death', 'left')
+                if len(self.other_snakes) == 0:
+                    return (objective, move)
                 e_objective, e_move, snake = self.get_best_enemy_attack(
                                                     objective, move)
-                if e_objective != None:
-                    if i >= 2:
-                        # too many iterations. No safe node.
-                        neighbours = self.get_neighbours(
-                                      self.samaritan.get_head(), self.samaritan)
-                        for neighbour in neighbours:
-                            if neighbour not in self.bad_nodes:
-                                return ("Best Move",
-                                            translate(self.samaritan.get_head(),
-                                                      neighbour))
-                        return ("Best Move", translate(self.samaritan.get_head(),
-                                                       neighbours[0]))
-                    else:
-                        x, y = self.samaritan.get_head()
-                        if move == 'right':
-                            self.bad_nodes.append((x+1, y))
-                        elif move == 'left':
-                            self.bad_nodes.append((x-1, y))
-                        elif move == 'up':
-                            self.bad_nodes.append((x, y+1))
-                        elif move == 'down':
-                            self.bad_nodes.append((x, y-1))
-                        continue
-                return (objective, move)
+                if e_objective == None:
+                    break
+                elif i > 2:
+                    return ('Best Bad Move', self.bad_moves[1])
+                else:
+                    self.bad_moves.append(move)
+                    objective, move = None, None
+                    continue
+            return (objective, move)
         else:
             samaritan = self.other_snakes[-1]
             objective, move, enemy_id = self.cornering_enemies()
