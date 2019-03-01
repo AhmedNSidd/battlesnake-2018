@@ -823,6 +823,7 @@ class Board(object):
         if (get_manhattan_distance(self.samaritan.get_head(), center) > int(halfway_x/2)):
             cost, path_to_center = a_star(self, self.samaritan.get_head(),
                                                 center, self.samaritan)
+            actual_distance_to_center = len(path_to_center) - 1
             if cost != None:
                 food_coordinates = self.foods[:]
                 other_snakes = deepcopy(self.other_snakes)
@@ -844,13 +845,13 @@ class Board(object):
                                         snake.coordinates = snake.coordinates[:x]
                 new_snake_coords = []
                 samaritan.length += foods
-                if samaritan.length-1 <= actual_distance_to_food:
+                if samaritan.length-1 <= actual_distance_to_center:
                     for x in range(samaritan.length-1):
                         xcoord, ycoord = path_to_center[-1-x]
                         new_snake_coords.append((xcoord, ycoord))
                     samaritan.coordinates = new_snake_coords
                 else:
-                    for x in range(actual_distance_to_food-(foods-1)):
+                    for x in range(actual_distance_to_center-(foods-1)):
                         samaritan.coordinates.pop()
                     for xcoord, ycoord in path_to_center[1:]:
                         samaritan.coordinates.insert(0, (xcoord, ycoord))
