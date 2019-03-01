@@ -41,7 +41,7 @@ class Board(object):
         self.mode = mode
         self.bad_moves = []
         self._mark_grid()
-        if DEBUG:
+        if DEBUG and mode == 0:
             self.print_grid()
 
 
@@ -111,7 +111,7 @@ class Board(object):
         on the board. Adds a buffer of 2 to the biggest enemy snake.
         '''
         for snake in self.other_snakes:
-            if snake.length + 2 >= self.samaritan.length:
+            if snake.length >= self.samaritan.length:
                 return False
         return True
 
@@ -187,10 +187,6 @@ class Board(object):
                 ]
         horizontal_neighbours = neighbours[:2]
         vertical_neighbours = neighbours[2:]
-        diagonal_neighbours = [
-                (xcoord+1, ycoord+1), (xcoord-1, ycoord-1),
-                (xcoord+1, ycoord-1), (xcoord-1, ycoord+1)
-                ]
         valid_neighbours = self.get_neighbours(node, my_snake, distance_to_node,
                                                foods_in_path)
         if (distance_to_node == 1
@@ -230,14 +226,22 @@ class Board(object):
                             else:
                                 cost += 3
                 if (snake.get_head() in neighbours
-                    and snake.length >= my_snake.length):
+                    and snake.length > my_snake.length):
                     cost += 10
+                e_tail_x, e_tail_y = snake.get_tail()
+                e_tail_neighbours = [
+                    (e_tail_x, e_tail_y+1), (e_tail_x, e_tail_y-1),
+                    (e_tail_x+1, e_tail_y), (e_tail_x-1, e_tail_y)
+                    ]
+                if node in e_tail_neighbours:
+                    cost -= 5
                 if (snake.get_tail() == node):
                     for food in self.foods:
                         if (get_manhattan_distance(snake.get_head(), food) <
                             get_manhattan_distance(my_snake.get_head(),
                                                    snake.get_tail())):
                             cost += 10
+
         if (xcoord == (self.width-1)
             or ycoord == (self.height-1)
             or xcoord == 0
@@ -309,8 +313,12 @@ class Board(object):
                         objective, move = self.find_path_to_food("Safe")
                     if objective == None:
                         objective, move = self.find_path_to_food("Risky")
-                    if objective == None:
-                        objective, move = self.find_path_to_my_tail()
+                    if self.is_samaritan_biggest():
+                        if objective == None:
+                            objective, move = self.attack_enemy()
+                    else:
+                        if objective == None:
+                            objective, move = self.find_path_to_my_tail()
                 elif not self.is_samaritan_biggest():
                     print("Samaritan isn't the biggest; Prioritizing food.")
                     if objective == None:
@@ -322,15 +330,15 @@ class Board(object):
                 else:
                     print("We are the biggest, and we don't need food. Attack.")
                     if objective == None:
+                        objective, move = self.find_path_to_food("Safe")
+                    if objective == None:
                         objective, move = self.attack_enemy()
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
                     if objective == None:
-                        objective, move = self.find_path_to_food("Safe")
-                    if objective == None:
                         objective, move = self.find_path_to_food("Risky")
-                if objective == None:
-                    objective, move = stall(self)
+                # if objective == None:
+                #     objective, move = stall(self)
                 if objective != None:
                     if DEBUG:
                         print("My move is", objective, move)
@@ -341,7 +349,7 @@ class Board(object):
                     if DEBUG:
                         print("The counter move is", e_objective, e_move)
                     if e_objective == None:
-                        break
+                        return (objective, move)
                     else:
                         if iteration > 4:
                             return ('Best Bad Move', self.bad_moves[1])
@@ -702,7 +710,7 @@ class Board(object):
         return ('Walling off', move, enemy_id)
 
     def find_path_to_food(self, risk):
-        '''Used by Samaritan to find safe food.
+        '''Used by Samaritan to find food.
         '''
         cost_and_path_to_all_foods = []
         for food in self.foods:
@@ -727,9 +735,9 @@ class Board(object):
             unsafe = False
             if risk == "Safe":
                 for snake in self.other_snakes:
-                    length, distance = bfs(self, snake.get_head(), food, snake)
+                    distance, path = bfs(self, snake.get_head(), food, snake)
                     if (snake.length > self.samaritan.length
-                        and length > actual_distance_to_food):
+                        and distance < actual_distance_to_food):
                         unsafe = True
             if unsafe:
                 continue
@@ -787,7 +795,6 @@ class Board(object):
                                             self.samaritan.get_head(),
                                             self.samaritan.get_tail(),
                                             self.samaritan)
-        print(cost_of_tail, path_to_tail)
         # print 'path found: ', path_to_tail
         if path_to_tail == None or len(path_to_tail) == 1:
             return (None, None)
