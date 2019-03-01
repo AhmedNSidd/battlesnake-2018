@@ -96,9 +96,9 @@ class Board(object):
         '''
         for row in self.grid:
             for point in row:
-                print(point, end=', ')
-            print
-        print
+                print(point, end='')
+            print()
+        print()
 
     def all_snake_objects(self):
         '''A method that returns all snake objects on the board.
