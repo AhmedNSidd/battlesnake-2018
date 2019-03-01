@@ -96,7 +96,7 @@ class Board(object):
         '''
         for row in self.grid:
             for point in row:
-                print(point,)
+                print(point, end=', ')
             print
         print
 
@@ -646,7 +646,7 @@ class Board(object):
                     samaritan.coordinates = new_snake_coords
                 else:
         # did divided by 2 here to see if it works better, maybe change it back.
-                    for x in range((distance_to_edge/2)-(foods-1)):
+                    for x in range(int(distance_to_edge/2)-(foods-1)):
                         samaritan.coordinates.pop()
                     for xcoord, ycoord in path_to_edge[1:]:
                         samaritan.coordinates.insert(0, (xcoord, ycoord))
@@ -660,7 +660,7 @@ class Board(object):
                     samaritan.coordinates = new_snake_coords
                 else:
         # did divided by 2 here to see if it works better, maybe change it back.
-                    for x in range((distance_to_edge/2)-foods):
+                    for x in range(int(distance_to_edge/2)-foods):
                         samaritan.coordinates.pop()
                     for xcoord, ycoord in path_to_edge[1:]:
                         samaritan.coordinates.insert(0, (xcoord, ycoord))
