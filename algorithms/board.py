@@ -1,10 +1,10 @@
-from snake import Snake
-from constants import (EMPTY_SPACE_MAKERS, FOOD_MARKER, SAMARITAN_HEAD_MARKER,
+from .snake import Snake
+from .constants import (EMPTY_SPACE_MAKERS, FOOD_MARKER, SAMARITAN_HEAD_MARKER,
     SAMARITAN_BODY_MARKER, ENEMY_SNAKE_HEAD_MARKER, ENEMY_SNAKE_BODY_MARKER,
     SNAKE_TAIL_MARKER)
-from utils import get_manhattan_distance, translate
+from .utils import get_manhattan_distance, translate
 from heapq import heappush, heappop
-from graph_algorithms import a_star, stall, bfs
+from .graph_algorithms import a_star, stall, bfs
 from copy import deepcopy
 
 DEBUG = True
@@ -96,7 +96,7 @@ class Board(object):
         '''
         for row in self.grid:
             for point in row:
-                print point,
+                print(point,)
             print
         print
 
@@ -196,8 +196,8 @@ class Board(object):
         if (distance_to_node == 1
             and translate(my_snake.get_head(), node) in self.bad_moves):
             if DEBUG:
-                print translate(my_snake.get_head(), node)
-                print self.bad_moves
+                print(translate(my_snake.get_head(), node))
+                print(self.bad_moves)
             cost += 99999
         for snake in self.all_snake_objects():
             if snake != my_snake:
@@ -207,16 +207,28 @@ class Board(object):
                         trajectory = translate(snake.get_head(), (x, y))
                         if (trajectory == 'down' and (node == (x-1, y+1) or
                             node == (x+1, y+1))):
-                            cost += 20
+                            if snake.length > my_snake.length:
+                                cost += 10
+                            else:
+                                cost += 3
                         elif (trajectory == 'up' and (node == (x-1, y-1) or
                             node == (x+1, y-1))):
-                            cost += 20
+                            if snake.length > my_snake.length:
+                                cost += 10
+                            else:
+                                cost += 3
                         elif (trajectory == 'left' and (node == (x-1, y-1) or
                             node == (x-1, y+1))):
-                            cost += 20
+                            if snake.length > my_snake.length:
+                                cost += 10
+                            else:
+                                cost += 3
                         elif (trajectory == 'right' and (node == (x+1, y-1) or
                             node == (x+1, y+1))):
-                            cost += 20
+                            if snake.length > my_snake.length:
+                                cost += 10
+                            else:
+                                cost += 3
                 if (snake.get_head() in neighbours
                     and snake.length >= my_snake.length):
                     cost += 10
@@ -321,13 +333,13 @@ class Board(object):
                     objective, move = stall(self)
                 if objective != None:
                     if DEBUG:
-                        print "My move is", objective, move
+                        print("My move is", objective, move)
                     if len(self.other_snakes) == 0:
                         return (objective, move)
                     e_objective, e_move, snake = self.get_best_enemy_attack(
                                                         objective, move)
                     if DEBUG:
-                        print "The counter move is", e_objective, e_move
+                        print("The counter move is", e_objective, e_move)
                     if e_objective == None:
                         break
                     else:
@@ -706,19 +718,21 @@ class Board(object):
         while cost_and_path_to_all_foods:
             distance_to_food, food = heappop(cost_and_path_to_all_foods)
             spaces_of_enemy_to_food = []
-            for snake in self.other_snakes:
-                space_of_enemy_to_food = get_manhattan_distance(
-                                                    snake.get_head(), food)
-                heappush(spaces_of_enemy_to_food, space_of_enemy_to_food)
             food_cost, food_path = a_star(self, self.samaritan.get_head(),
                                                 food, self.samaritan,
                                                 self.max_cost_to_food(risk))
             if food_cost == None:
                 continue
             actual_distance_to_food = len(food_path) - 1
-            if len(self.other_snakes) != 0 and risk == "Safe":
-                if heappop(spaces_of_enemy_to_food) <= actual_distance_to_food:
-                    continue
+            unsafe = False
+            if risk == "Safe":
+                for snake in self.other_snakes:
+                    length, distance = bfs(self, snake.get_head(), food)
+                    if (snake.length > self.samaritan.length
+                        and length > actual_distance_to_food):
+                        unsafe = True
+            if unsafe:
+                continue
             food_coordinates = self.foods[:]
             other_snakes = deepcopy(self.other_snakes)
             samaritan = deepcopy(self.samaritan)
@@ -773,7 +787,7 @@ class Board(object):
                                             self.samaritan.get_head(),
                                             self.samaritan.get_tail(),
                                             self.samaritan)
-        print (cost_of_tail, path_to_tail)
+        print(cost_of_tail, path_to_tail)
         # print 'path found: ', path_to_tail
         if path_to_tail == None or len(path_to_tail) == 1:
             return (None, None)
