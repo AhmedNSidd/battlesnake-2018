@@ -294,17 +294,17 @@ class Board(object):
                 if (self.samaritan.health <= health_limit):
                     print("Samaritan's health is low.")
                     if objective == None:
-                        objective, move = self.find_path_to_safe_food()
+                        objective, move = self.find_path_to_food("Safe")
                     if objective == None:
-                        objective, move = self.find_path_to_risky_food()
+                        objective, move = self.find_path_to_food("Risky")
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
                 elif not self.is_samaritan_biggest():
                     print("Samaritan isn't the biggest; Prioritizing food.")
                     if objective == None:
-                        objective, move = self.find_path_to_safe_food()
+                        objective, move = self.find_path_to_food("Safe")
                     if objective == None:
-                        objective, move = self.find_path_to_risky_food()
+                        objective, move = self.find_path_to_food("Risky")
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
                 else:
@@ -314,9 +314,9 @@ class Board(object):
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
                     if objective == None:
-                        objective, move = self.find_path_to_safe_food()
+                        objective, move = self.find_path_to_food("Safe")
                     if objective == None:
-                        objective, move = self.find_path_to_risky_food()
+                        objective, move = self.find_path_to_food("Risky")
                 if objective == None:
                     objective, move = stall(self)
                 if objective != None:
