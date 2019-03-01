@@ -7,7 +7,7 @@ from heapq import heappush, heappop
 from graph_algorithms import a_star, stall, bfs
 from copy import deepcopy
 
-DEBUG = False
+DEBUG = True
 
 class Board(object):
     '''
