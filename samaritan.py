@@ -43,6 +43,7 @@ def move():
     '''
     environment = Board(bottle.request.json)
     objective, action = environment.get_action()
+    print(objective, action)
     return {
         'move': action,
         'taunt': objective
