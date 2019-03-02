@@ -826,7 +826,7 @@ class Board(object):
             return (None, None)
         return ('Going To My Tail', translate(self.samaritan.get_head(),
                            path_to_tail[1]))
-                           
+
     def attack_enemy(self):
         '''Used to attack the node that the enemy is most likely going to go to.
         '''
