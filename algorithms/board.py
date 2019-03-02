@@ -117,7 +117,7 @@ class Board(object):
         on the board. Adds a buffer of 2 to the biggest enemy snake.
         '''
         for snake in self.other_snakes:
-            if snake.length + 2 >= self.samaritan.length:
+            if snake.length + 4 >= self.samaritan.length:
                 return False
         return True
 
