@@ -8,7 +8,7 @@ from .graph_algorithms import a_star, stall, bfs, advanced_floodfill
 from copy import deepcopy
 from time import time
 
-DEBUG = True
+DEBUG = False
 
 class Board(object):
     '''
