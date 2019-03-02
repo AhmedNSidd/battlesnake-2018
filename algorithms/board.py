@@ -698,7 +698,7 @@ class Board(object):
     def find_path_to_food(self, risk):
         '''Used by Samaritan to find safe food.
         '''
-        cost_to_all_foods = []
+        cost_and_path_to_all_foods = []
         for food in self.foods:
             for snake in self.other_snakes:
                 distance = get_manhattan_distance(self.samaritan.get_head(),
