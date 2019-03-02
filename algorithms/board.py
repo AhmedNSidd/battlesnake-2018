@@ -300,10 +300,10 @@ class Board(object):
                 else:
                     print("We are the biggest, and we don't need food. Attack.")
                     if objective == None:
+                        start = time()
                         objective, move = self.find_path_to_food("Safe")
                         if DEBUG:
                             print("Time to find safe food {}ms".format((time() - start) * 1000))
-                    start = time()
                     if objective == None:
                         objective, move = self.attack_enemy()
                     if objective == None:
