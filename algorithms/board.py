@@ -207,31 +207,31 @@ class Board(object):
                             if snake.length > my_snake.length:
                                 cost += 10
                             else:
-                                cost += 5
+                                cost += 3
                         elif (trajectory == 'up' and (node == (x-1, y-1) or
                             node == (x+1, y-1))):
                             if snake.length > my_snake.length:
                                 cost += 10
                             else:
-                                cost += 5
+                                cost += 3
                         elif (trajectory == 'left' and (node == (x-1, y-1) or
                             node == (x-1, y+1))):
                             if snake.length > my_snake.length:
                                 cost += 10
                             else:
-                                cost += 5
+                                cost += 3
                         elif (trajectory == 'right' and (node == (x+1, y-1) or
                             node == (x+1, y+1))):
                             if snake.length > my_snake.length:
                                 cost += 10
                             else:
-                                cost += 5
+                                cost += 3
         valid_neighbours = self.get_neighbours(node, my_snake, distance_to_node,
                                                foods_in_path)
         for snake in self.other_snakes:
-            for body in snake.coordinates:
-                if body in valid_neighbours:
-                    cost += 1
+            if (snake.get_head() in valid_neighbours
+                and snake.length > my_snake.length):
+                cost += 3
         #         if (snake.get_head() in neighbours
         #             and snake.length > my_snake.length):
         #             cost += 10
