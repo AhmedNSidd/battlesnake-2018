@@ -781,7 +781,8 @@ class Board(object):
             min_distance = 999999
             min_length = 0
             for snake in self.other_snakes:
-                e_distance_to_food, e_path = bfs(snake.get_head(), food, snake)
+                e_distance_to_food, e_path = bfs(self, snake.get_head(), food,
+                                                 snake)
                 if e_distance_to_food == None:
                     continue
                 if e_distance_to_food < min_distance:
