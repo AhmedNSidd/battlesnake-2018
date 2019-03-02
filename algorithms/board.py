@@ -406,21 +406,21 @@ class Board(object):
             return (objective, move)
         elif self.mode == 2:
             samaritan = self.other_snakes[-1]
-            accessible_to_tail = a_star(self, samaritan.get_head(),
-                                        samaritan.get_tail(), samaritan)
-            if accessible_to_tail == (None, None):
-                return ('Walling off', 'right', samaritan.id) # if I can't access my own tail after I make my move, then return "walling off" to suggest that we shouldn't make this move.
             objective, move, enemy_id = self.cornering_enemies()
-            if not objective == None:
+            if enemy_id == samaritan.id:
                 return (objective, move, enemy_id)
             objective, move, enemy_id = self.trapping_enemies()
-            if not objective == None:
+            if enemy_id == samaritan.id:
                 return (objective, move, enemy_id)
             objective, move, enemy_id = self.walling_enemies()
-            if not objective == None:
+            if enemy_id == samaritan.id:
                 return (objective, move, enemy_id)
+            accessible_to_tail = bfs(self, samaritan.get_head(),
+                                        samaritan.get_tail(), samaritan)
+            if accessible_to_tail == (None, None):
+                return ('Walling off', 'right', samaritan.id)
             return (None, None, None)
-
+            
     def cornering_enemies(self):
         '''This attack tactic by samaritan corners an enemy if the enemy is
         'going through a tunnel' i.e. there's only one valid move the enemy
