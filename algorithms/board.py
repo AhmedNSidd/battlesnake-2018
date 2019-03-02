@@ -830,9 +830,9 @@ class Board(object):
         center = (halfway_x, halfway_y)
         if (get_manhattan_distance(self.samaritan.get_head(), center) > int(halfway_x/2)):
             cost, path_to_center = a_star(self, self.samaritan.get_head(),
-                                                center, self.samaritan)
-            actual_distance_to_center = len(path_to_center) - 1
+                                                center, self.samaritan)    
             if cost != None:
+                actual_distance_to_center = len(path_to_center) - 1
                 food_coordinates = self.foods[:]
                 other_snakes = deepcopy(self.other_snakes)
                 samaritan = deepcopy(self.samaritan)
