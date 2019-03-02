@@ -38,8 +38,9 @@ class Board(object):
         self.other_snakes = [self._parse_snake_object(snake)
                              for snake in data['board']['snakes']
                              if self.samaritan.id != snake['id']]
-        for snake in self.other_snakes:
-            print(snake)
+        if DEBUG and mode == 0:
+            for snake in self.other_snakes:
+                print(snake)
         self.mode = mode
         self.bad_moves = []
         self._mark_grid()
@@ -314,7 +315,8 @@ class Board(object):
                     if objective == None:
                         objective, move, enemy_id = self.walling_enemies()
                 if (self.samaritan.health <= health_limit):
-                    print("Samaritan's health is low.")
+                    if DEBUG:
+                        print("Samaritan's health is low.")
                     if objective == None:
                         objective, move = self.find_path_to_food("Safe")
                     if objective == None:
@@ -326,7 +328,8 @@ class Board(object):
                         if objective == None:
                             objective, move = self.find_path_to_my_tail()
                 elif not self.is_samaritan_biggest():
-                    print("Samaritan isn't the biggest; Prioritizing food.")
+                    if DEBUG:
+                        print("Samaritan isn't the biggest; Prioritizing food.")
                     if objective == None:
                         objective, move = self.find_path_to_food("Safe")
                     if objective == None:
@@ -334,7 +337,8 @@ class Board(object):
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
                 else:
-                    print("We are the biggest, and we don't need food. Attack.")
+                    if DEBUG:
+                        print("We are the biggest, and we don't need food. Attack.")
                     if objective == None:
                         objective, move = self.find_path_to_food("Safe")
                     if objective == None:
