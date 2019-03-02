@@ -358,8 +358,9 @@ class Board(object):
                         foods = 0
                         if neighbour in self.foods:
                             foods += 1
-                        heappush(all_moves, (get_cost(neighbour, self.samaritan,
-                                                      1, foods), neighbour))
+                        heappush(all_moves, (self.get_cost(neighbour,
+                                                           self.samaritan, 1,
+                                                           foods), neighbour))
                     min_cost, neighbour = heappop(all_moves)
                     return ('Best Bad Move', translate(
                                         self.samaritan.get_head(), neighbour))
