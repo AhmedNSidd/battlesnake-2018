@@ -1,5 +1,5 @@
 from heapq import heappush, heappop
-from utils import get_manhattan_distance, translate
+from .utils import get_manhattan_distance, translate
 from collections import deque
 
 def a_star(board, start, target, snake, cost_limit=99999):
