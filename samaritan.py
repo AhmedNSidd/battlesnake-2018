@@ -3,6 +3,7 @@ import os
 from algorithms.board import Board
 from time import time
 
+
 @bottle.route('/')
 def static():
     '''
@@ -60,7 +61,10 @@ def end():
     hence there is need to negate the runtimes since I am using a min-heap to
     store the runtimes.
     '''
-    pass
+    data = bottle.request.json
+    return bottle.HTTPResponse(
+        status=200
+    )
 
 application = bottle.default_app()
 
