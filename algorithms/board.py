@@ -424,17 +424,25 @@ class Board(object):
             return (objective, move)
         else:
             samaritan = self.other_snakes[-1]
+            start = time()
             objective, move, enemy_id = self.cornering_enemies()
+            print("Time for paranoid cornering {}ms".format(time() - start))
             if enemy_id == samaritan.id:
                 return (objective, move, enemy_id)
+            start = time()
             objective, move, enemy_id = self.trapping_enemies()
+            print("Time for paranoid trapping {}ms".format(time() - start))
             if enemy_id == samaritan.id:
                 return (objective, move, enemy_id)
+            start = time()
             objective, move, enemy_id = self.walling_enemies()
+            print("Time for paranoid walling {}ms".format(time() - start))
             if enemy_id == samaritan.id:
                 return (objective, move, enemy_id)
+            start = time()
             accessible_to_tail = bfs(self, samaritan.get_head(),
                                         samaritan.get_tail(), samaritan)
+            print("Time for paranoid tailing {}ms".format(time() - start))
             if accessible_to_tail == (None, None):
                 return ('Walling off', 'right', samaritan.id)
             return (None, None, None)
