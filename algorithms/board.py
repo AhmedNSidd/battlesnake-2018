@@ -38,6 +38,8 @@ class Board(object):
         self.other_snakes = [self._parse_snake_object(snake)
                              for snake in data['board']['snakes']
                              if self.samaritan.id != snake['id']]
+        for snake in self.other_snakes:
+            print(snake)
         self.mode = mode
         self.bad_moves = []
         self._mark_grid()
