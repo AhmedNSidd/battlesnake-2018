@@ -66,8 +66,8 @@ class Board(object):
         This method marks the entire grid with my snake, enemy snakes, foods,
         and empty spaces
         '''
-        for x in range(self.height):
-            self.grid.append([EMPTY_SPACE_MAKERS for y in range(self.width)])
+        for row in range(self.height):
+            self.grid.append([EMPTY_SPACE_MAKERS for col in range(self.width)])
         for x, y in self.samaritan.coordinates[1:-1]:
             self.grid[y][x] = SAMARITAN_BODY_MARKER
         x, y = self.samaritan.coordinates[0]
