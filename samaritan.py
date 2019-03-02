@@ -1,7 +1,7 @@
 import bottle
 import os
 from algorithms.board import Board
-
+from time import time
 
 @bottle.route('/')
 def static():
@@ -42,7 +42,9 @@ def move():
     state and getting an action for our snake, Samaritan.
     '''
     environment = Board(bottle.request.json)
+    start = time()
     objective, action = environment.get_action()
+    print("Time to get move: {}ms".format(time() - start))
     print(objective, action)
     return {
         'move': action,
