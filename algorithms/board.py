@@ -841,7 +841,7 @@ class Board(object):
                 continue
 
             return ('{} food'.format(risk), translate(
-                                    self.samaritan.get_head(), food_path[1]))
+                                    self.samaritan.get_head(), path[1]))
 
         return (None, None)
 
