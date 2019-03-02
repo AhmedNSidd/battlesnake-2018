@@ -117,7 +117,7 @@ class Board(object):
         on the board. Adds a buffer of 2 to the biggest enemy snake.
         '''
         for snake in self.other_snakes:
-            if snake.length + 4 >= self.samaritan.length:
+            if snake.length + 2 >= self.samaritan.length:
                 return False
         return True
 
@@ -406,19 +406,19 @@ class Board(object):
             return (objective, move)
         elif self.mode == 2:
             samaritan = self.other_snakes[-1]
-            objective, move, enemy_id = self.cornering_enemies()
-            if enemy_id == samaritan.id:
-                return (objective, move, enemy_id)
-            objective, move, enemy_id = self.trapping_enemies()
-            if enemy_id == samaritan.id:
-                return (objective, move, enemy_id)
-            objective, move, enemy_id = self.walling_enemies()
-            if enemy_id == samaritan.id:
-                return (objective, move, enemy_id)
-            accessible_to_tail = bfs(self, samaritan.get_head(),
+            accessible_to_tail = a_star(self, samaritan.get_head(),
                                         samaritan.get_tail(), samaritan)
             if accessible_to_tail == (None, None):
-                return ('Walling off', 'right', samaritan.id)
+                return ('Walling off', 'right', samaritan.id) # if I can't access my own tail after I make my move, then return "walling off" to suggest that we shouldn't make this move.
+            objective, move, enemy_id = self.cornering_enemies()
+            if not objective == None:
+                return (objective, move, enemy_id)
+            objective, move, enemy_id = self.trapping_enemies()
+            if not objective == None:
+                return (objective, move, enemy_id)
+            objective, move, enemy_id = self.walling_enemies()
+            if not objective == None:
+                return (objective, move, enemy_id)
             return (None, None, None)
 
     def cornering_enemies(self):
@@ -759,38 +759,31 @@ class Board(object):
         '''
         cost_and_path_to_all_foods = []
         for food in self.foods:
-            min_distance_to_food = 99999
-            min_length = 0
+            max = -99999
             for snake in self.other_snakes:
-                distance_of_e_to_food, path = bfs(self, snake.get_head(), food,
-                                                  snake)
-                if distance_of_e_to_food == None:
-                    continue
-                if distance_of_e_to_food < min_distance_to_food:
-                    min_length = snake.length
-                    min_distance_to_food = distance_of_e_to_food
-            heappush(cost_and_path_to_all_foods, ((get_manhattan_distance(
-                       self.samaritan.get_head(), food) - min_distance_to_food),
-                       food, min_distance_to_food, min_length))
+                distance = get_manhattan_distance(self.samaritan.get_head(),
+                                                 food) - get_manhattan_distance(
+                                                    snake.get_head(), food)
+                if distance > max:
+                    max = distance
+            heappush(cost_and_path_to_all_foods, (max, food))
 
         while cost_and_path_to_all_foods:
-            heuristic, food, min_distance, min_length = heappop(cost_and_path_to_all_foods)
+            distance_to_food, food = heappop(cost_and_path_to_all_foods)
+            spaces_of_enemy_to_food = []
+            for snake in self.other_snakes:
+                space_of_enemy_to_food = get_manhattan_distance(
+                                                    snake.get_head(), food)
+                heappush(spaces_of_enemy_to_food, space_of_enemy_to_food)
             food_cost, food_path = a_star(self, self.samaritan.get_head(),
                                                 food, self.samaritan,
                                                 self.max_cost_to_food(risk))
             if food_cost == None:
                 continue
-            distance_to_food = len(food_path) - 1
-            if len(self.other_snakes) != 0:
-                if min_distance < distance_to_food:
+            actual_distance_to_food = len(food_path) - 1
+            if len(self.other_snakes) != 0 and risk == "Safe":
+                if heappop(spaces_of_enemy_to_food) <= actual_distance_to_food:
                     continue
-                elif (min_distance == distance_to_food
-                      and min_length >= self.samaritan.length):
-                      if min_length > self.samaritan.length:
-                          continue
-                      elif risk == 'Safe':
-                          continue
-
             food_coordinates = self.foods[:]
             other_snakes = deepcopy(self.other_snakes)
             samaritan = deepcopy(self.samaritan)
@@ -812,13 +805,13 @@ class Board(object):
             samaritan.health = 100
             new_snake_coords = []
             samaritan.length += foods
-            if samaritan.length-1 <= distance_to_food:
+            if samaritan.length-1 <= actual_distance_to_food:
                 for x in range(samaritan.length-1):
                     xcoord, ycoord = food_path[-1-x]
                     new_snake_coords.append((xcoord, ycoord))
                 samaritan.coordinates = new_snake_coords
             else:
-                for x in range(distance_to_food-(foods-1)):
+                for x in range(actual_distance_to_food-(foods-1)):
                     samaritan.coordinates.pop()
                 for xcoord, ycoord in food_path[1:]:
                     samaritan.coordinates.insert(0, (xcoord, ycoord))
