@@ -386,7 +386,7 @@ class Board(object):
                         print("My move is {} {}".format(objective, move))
                     if len(self.other_snakes) == 0:
                         return (objective, move)
-                    start = time.time()
+                    start = time()
                     e_objective, e_move, snake = self.get_best_enemy_attack(
                                                         objective, move)
                     if DEBUG:
