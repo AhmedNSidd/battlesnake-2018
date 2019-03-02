@@ -786,8 +786,8 @@ class Board(object):
                 if closest_snake_distance < actual_distance_to_food:
                     continue
                 elif (closest_snake_distance == actual_distance_to_food
-                      and length >= self.samaritan):
-                      if length > self.samaritan:
+                      and length >= self.samaritan.length):
+                      if length > self.samaritan.length:
                           continue
                       elif risk == 'Safe':
                           continue
