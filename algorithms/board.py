@@ -231,7 +231,7 @@ class Board(object):
         for snake in self.other_snakes:
             if (snake.get_head() in valid_neighbours
                 and snake.length > my_snake.length):
-                cost += 3
+                cost += 6
         #         if (snake.get_head() in neighbours
         #             and snake.length > my_snake.length):
         #             cost += 10
