@@ -771,33 +771,33 @@ class Board(object):
     def find_path_to_food(self, risk):
         '''Used by Samaritan to find safe food.
         '''
-        cost_and_path_to_all_foods = []
+        cost_to_all_foods = []
         for food in self.foods:
-            max = -99999
+            cost, path = a_star(self, self.samaritan.get_head(), food,
+                                self.samaritan, self.max_cost_to_food(risk))
+            if cost == None:
+                continue
+            sam_distance_to_food = len(path) - 1
+            min_distance = 999999
+            min_length = 0
             for snake in self.other_snakes:
-                distance = get_manhattan_distance(self.samaritan.get_head(),
-                                                 food) - get_manhattan_distance(
-                                                    snake.get_head(), food)
-                if distance > max:
-                    max = distance
-            heappush(cost_and_path_to_all_foods, (max, food))
+                e_distance_to_food, e_path = bfs(snake.get_head(), food, snake)
+                if e_distance_to_food == None:
+                    continue
+                if e_distance_to_food < min_distance:
+                    min_distance = e_distance_to_food
+                    min_length = snake.length
+            if min_distance < sam_distance_to_food:
+                continue
+            elif min_distance == sam_distance_to_food:
+                if min_length > self.samaritan.length:
+                    continue
+            heuristic = sam_distance_to_food - min_distance
+            heappush(cost_and_path_to_all_foods, (heuristic, food, path, sam_distance_to_food))
 
         while cost_and_path_to_all_foods:
-            distance_to_food, food = heappop(cost_and_path_to_all_foods)
-            spaces_of_enemy_to_food = []
-            for snake in self.other_snakes:
-                space_of_enemy_to_food = get_manhattan_distance(
-                                                    snake.get_head(), food)
-                heappush(spaces_of_enemy_to_food, space_of_enemy_to_food)
-            food_cost, food_path = a_star(self, self.samaritan.get_head(),
-                                                food, self.samaritan,
-                                                self.max_cost_to_food(risk))
-            if food_cost == None:
-                continue
-            actual_distance_to_food = len(food_path) - 1
-            if len(self.other_snakes) != 0 and risk == "Safe":
-                if heappop(spaces_of_enemy_to_food) <= actual_distance_to_food:
-                    continue
+            heuristic, food, path, actual_distance_to_food = heappop(
+                                                    cost_and_path_to_all_foods)
             food_coordinates = self.foods[:]
             other_snakes = deepcopy(self.other_snakes)
             samaritan = deepcopy(self.samaritan)
