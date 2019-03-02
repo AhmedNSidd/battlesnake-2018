@@ -367,6 +367,10 @@ class Board(object):
             objective, move, enemy_id = self.walling_enemies()
             if enemy_id == samaritan.id:
                 return (objective, move, enemy_id)
+            accessible_to_tail = bfs(self, samaritan.get_head(),
+                                        samaritan.get_tail(), samaritan)
+            if accessible_to_tail == (None, None):
+                return ('Walling off', 'right', samaritan.id)
             return (None, None, None)
 
 
@@ -401,11 +405,7 @@ class Board(object):
         #         #     return ('Death', 'left')
         #     return (objective, move)
         # elif self.mode == 2:
-
-        #     accessible_to_tail = a_star(self, samaritan.get_head(),
-        #                                 samaritan.get_tail(), samaritan)
-        #     if accessible_to_tail == (None, None):
-        #         return ('Walling off', 'right', samaritan.id) # if I can't access my own tail after I make my move, then return "walling off" to suggest that we shouldn't make this move.
+# that we shouldn't make this move.
 
     def cornering_enemies(self):
         '''
