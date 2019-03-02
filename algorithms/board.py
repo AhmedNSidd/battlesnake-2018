@@ -55,11 +55,12 @@ class Board(object):
     def _parse_snake_object(self, snake_object):
         '''Returns a snake object given the JSON object from the API
         '''
+        name = snake_object['name']
         id = snake_object['id']
         coords = self._parse_data_list(snake_object['body'])
         length = len(coords)
         health = snake_object['health']
-        return Snake(id, coords, health, length)
+        return Snake(name, id, coords, health, length)
 
     def _mark_grid(self):
         '''
