@@ -225,7 +225,7 @@ class Board(object):
                         elif (trajectory == 'right' and (node == (x+1, y-1) or
                             node == (x+1, y+1))):
                             if DEBUG:
-                                print("Risky node")                            
+                                print("Risky node")
                             if snake.length > my_snake.length:
                                 cost += 25
                             else:
@@ -768,6 +768,8 @@ class Board(object):
             if risk == "Safe":
                 for snake in self.other_snakes:
                     distance, path = bfs(self, snake.get_head(), food, snake)
+                    if distance == None:
+                        continue
                     if (snake.length > self.samaritan.length
                         and distance < actual_distance_to_food):
                         unsafe = True
