@@ -4,7 +4,7 @@ from .constants import (EMPTY_SPACE_MAKERS, FOOD_MARKER, SAMARITAN_HEAD_MARKER,
     SNAKE_TAIL_MARKER)
 from .utils import get_manhattan_distance, translate
 from heapq import heappush, heappop
-from .graph_algorithms import a_star, stall, bfs
+from .graph_algorithms import a_star, stall, bfs, advanced_floodfill
 from copy import deepcopy
 from time import time
 
@@ -409,10 +409,11 @@ class Board(object):
                         foods = 0
                         if neighbour in self.foods:
                             foods += 1
-                        heappush(all_moves, (self.get_cost(neighbour,
-                                                           self.samaritan, 1,
-                                                           foods), neighbour))
-                    min_cost, neighbour = heappop(all_moves)
+                        heappush(all_moves, (advanced_floodfill(
+                                    self, neighbour, self.samaritan, 1, foods),
+                                    self.get_cost(neighbour, self.samaritan, 1,
+                                                  foods), neighbour))
+                    floodfill, min_cost, neighbour = heappop(all_moves)
                     return ('Best Bad Move', translate(
                                         self.samaritan.get_head(), neighbour))
                 else:

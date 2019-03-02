@@ -81,20 +81,21 @@ in the future'''
 #                 to_be_processed.append((neighbour, length_of_path+1))
 #     return len(processed) - 1
 #
-# def advanced_floodfill(board, snake):
-#     '''Advanced version accounts for moving snakes
-#     '''
-#     processed = set()
-#     start = snake.get_head()
-#     to_be_processed = [(snake.get_head(), 0)]
-#     while to_be_processed:
-#         curr_node, length_of_path = to_be_processed.pop()
-#         processed.add(curr_node)
-#         neighbours = board.get_neighbours(curr_node, snake, length_of_path+1)
-#         for neighbour in neighbours:
-#             if neighbour not in processed:
-#                 to_be_processed.append((neighbour, length_of_path+1))
-    # return len(processed) - 1
+def advanced_floodfill(board, node, snake, distance_to_node=0, foods=0):
+    '''Advanced version accounts for moving snakes
+    '''
+    processed = set()
+    start = snake.get_head()
+    to_be_processed = [(snake.get_head(), 0)]
+    while to_be_processed:
+        curr_node, length_of_path = to_be_processed.pop()
+        processed.add(curr_node)
+        neighbours = board.get_neighbours(curr_node, snake, length_of_path+1)
+        for neighbour in neighbours:
+            if neighbour not in processed:
+                to_be_processed.append((neighbour, length_of_path+1))
+    return len(processed) - 1
+
 def bfs(board, start, target, snake):
     '''
     Uses bfs to see if a path is available from start to target. Returns
