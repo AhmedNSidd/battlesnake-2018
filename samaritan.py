@@ -44,7 +44,7 @@ def move():
     environment = Board(bottle.request.json)
     start = time()
     objective, action = environment.get_action()
-    print("Time to get move: {}ms".format(time() - start))
+    print("Time to get move: {}ms".format((time() - start) * 1000))
     print(objective, action)
     return {
         'move': action,
