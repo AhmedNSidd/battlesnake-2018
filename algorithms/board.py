@@ -6,6 +6,7 @@ from .utils import get_manhattan_distance, translate
 from heapq import heappush, heappop
 from .graph_algorithms import a_star, stall, bfs
 from copy import deepcopy
+from time import time
 
 DEBUG = True
 
@@ -203,32 +204,24 @@ class Board(object):
                         trajectory = translate(snake.get_head(), (x, y))
                         if (trajectory == 'down' and (node == (x-1, y+1) or
                             node == (x+1, y+1))):
-                            if DEBUG:
-                                print("Risky node")
                             if snake.length > my_snake.length:
                                 cost += 10
                             else:
                                 cost += 5
                         elif (trajectory == 'up' and (node == (x-1, y-1) or
                             node == (x+1, y-1))):
-                            if DEBUG:
-                                print("Risky node")
                             if snake.length > my_snake.length:
                                 cost += 10
                             else:
                                 cost += 5
                         elif (trajectory == 'left' and (node == (x-1, y-1) or
                             node == (x-1, y+1))):
-                            if DEBUG:
-                                print("Risky node")
                             if snake.length > my_snake.length:
                                 cost += 10
                             else:
                                 cost += 5
                         elif (trajectory == 'right' and (node == (x+1, y-1) or
                             node == (x+1, y+1))):
-                            if DEBUG:
-                                print("Risky node")
                             if snake.length > my_snake.length:
                                 cost += 10
                             else:
@@ -312,53 +305,84 @@ class Board(object):
                 else:
                     health_limit = 40
                 if i == 0:
+                    start = time()
                     if objective == None:
                         objective, move, enemy_id = self.cornering_enemies()
+                    print("Time to corner {}ms".format(time() - start))
+                    start = time()
                     if objective == None:
                         objective, move, enemy_id = self.trapping_enemies()
+                    print("Time to trap {}ms".format(time() - start))
+                    start = time()
                     if objective == None:
                         objective, move, enemy_id = self.walling_enemies()
+                    print("Time to wall {}ms".format(time() - start))
                 if (self.samaritan.health <= health_limit):
                     if DEBUG:
                         print("Samaritan's health is low.")
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Safe")
+                        print("Time to find safe food {}ms".format(time() - start))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Risky")
+                        print("Time to find risky food {}ms".format(time() - start))
+                    start = time()
                     if self.is_samaritan_biggest():
                         if objective == None:
                             objective, move = self.attack_enemy()
+                            print("Time to attack {}ms".format(time() - start))
                     else:
                         if objective == None:
                             objective, move = self.find_path_to_my_tail()
+                            print("Time to find tail {}ms".format(time() - start))
                 elif not self.is_samaritan_biggest():
                     if DEBUG:
                         print("Samaritan isn't the biggest; Prioritizing food.")
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Safe")
+                        print("Time to find safe food {}ms".format(time() - start))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Risky")
+                        print("Time to find risky food {}ms".format(time() - start))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
+                        print("Time to find tail {}ms".format(time() - start))
                 else:
                     if DEBUG:
                         print("We are the biggest, and we don't need food. Attack.")
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Safe")
+                        print("Time to find safe food {}ms".format(time() - start))
+                    start = time()
                     if objective == None:
                         objective, move = self.attack_enemy()
+                        print("Time to attack {}ms".format(time() - start))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
+                        print("Time to find tail {}ms".format(time() - start))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Risky")
+                        print("Time to find risky food {}ms".format(time() - start))
                 if objective == None:
+                    start = time()
                     objective, move = stall(self)
+                    print("Time to stall {}ms".format(time() - start))
                 if objective == None:
                     return ('Death', 'left')
                 if len(self.other_snakes) == 0:
                     return (objective, move)
+                start = time()
                 e_objective, e_move, snake = self.get_best_enemy_attack(
                                                     objective, move)
+                print("Time to paranoia {}ms".format(time() - start))
                 if e_objective == None:
                     break
                 elif i > 2:
