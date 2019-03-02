@@ -764,6 +764,8 @@ class Board(object):
             for snake in self.other_snakes:
                 distance_of_e_to_food, path = bfs(self, snake.get_head(), food,
                                                   snake)
+                if distance_of_e_to_food == None:
+                    continue
                 if distance_of_e_to_food < min_distance_to_food:
                     min_length = snake.length
                     min_distance_to_food = distance_of_e_to_food
