@@ -4,9 +4,10 @@ class Snake(object):
     them. For Samaritan, we can also get an action based on a given board.
     '''
 
-    def __init__(self, s_id, list_of_coords, health, length):
+    def __init__(self, s_name, s_id, list_of_coords, health, length):
         '''Initializes snake object with important instance variables.
         '''
+        self.name = s_name
         self.id = s_id
         self.coordinates = list_of_coords
         self.health = health

@@ -1,10 +1,10 @@
-from snake import Snake
-from constants import (EMPTY_SPACE_MAKERS, FOOD_MARKER, SAMARITAN_HEAD_MARKER,
+from .snake import Snake
+from .constants import (EMPTY_SPACE_MAKERS, FOOD_MARKER, SAMARITAN_HEAD_MARKER,
     SAMARITAN_BODY_MARKER, ENEMY_SNAKE_HEAD_MARKER, ENEMY_SNAKE_BODY_MARKER,
     SNAKE_TAIL_MARKER)
-from utils import get_manhattan_distance, translate
+from .utils import get_manhattan_distance, translate
 from heapq import heappush, heappop
-from graph_algorithms import a_star, stall, bfs
+from .graph_algorithms import a_star, stall, bfs
 from copy import deepcopy
 
 DEBUG = True
@@ -38,10 +38,13 @@ class Board(object):
         self.other_snakes = [self._parse_snake_object(snake)
                              for snake in data['board']['snakes']
                              if self.samaritan.id != snake['id']]
+        if DEBUG and mode == 0:
+            for snake in self.other_snakes:
+                print(snake)
         self.mode = mode
         self.bad_moves = []
         self._mark_grid()
-        if DEBUG:
+        if DEBUG and mode == 0:
             self.print_grid()
 
 
@@ -55,11 +58,12 @@ class Board(object):
     def _parse_snake_object(self, snake_object):
         '''Returns a snake object given the JSON object from the API
         '''
+        name = snake_object['name']
         id = snake_object['id']
         coords = self._parse_data_list(snake_object['body'])
         length = len(coords)
         health = snake_object['health']
-        return Snake(id, coords, health, length)
+        return Snake(name, id, coords, health, length)
 
     def _mark_grid(self):
         '''
@@ -96,9 +100,9 @@ class Board(object):
         '''
         for row in self.grid:
             for point in row:
-                print point,
-            print
-        print
+                print(point, end=' ')
+            print()
+        print()
 
     def all_snake_objects(self):
         '''A method that returns all snake objects on the board.
@@ -196,8 +200,8 @@ class Board(object):
         if (distance_to_node == 1
             and translate(my_snake.get_head(), node) in self.bad_moves):
             if DEBUG:
-                print translate(my_snake.get_head(), node)
-                print self.bad_moves
+                print(translate(my_snake.get_head(), node))
+                print(self.bad_moves)
             cost += 99999
         for snake in self.all_snake_objects():
             if snake != my_snake:
@@ -334,13 +338,13 @@ class Board(object):
                     objective, move = stall(self)
                 if objective != None:
                     if DEBUG:
-                        print "My move is", objective, move
+                        print("My move is {} {}".format(objective, move))
                     if len(self.other_snakes) == 0:
                         return (objective, move)
                     e_objective, e_move, snake = self.get_best_enemy_attack(
                                                         objective, move)
                     if DEBUG:
-                        print "The counter move is", e_objective, e_move
+                        print("The counter move is {} {}".format(e_objective, e_move))
                     if e_objective == None:
                         break
                     else:
@@ -991,6 +995,7 @@ class Board(object):
 
         for x in range(len(enemies)):
             data['board']['snakes'].append({
+              "name": enemies[x].name,
               "body": [],
               "health": enemies[x].health,
               "id": enemies[x].id,
@@ -1002,6 +1007,7 @@ class Board(object):
                 })
 
         data['you'] = {
+            "name": samaritan.name,
             "body": [],
             "health": samaritan.health,
             "id": samaritan.id,
