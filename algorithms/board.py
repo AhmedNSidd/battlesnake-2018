@@ -198,9 +198,6 @@ class Board(object):
                     enemy_neighbours = self.get_neighbours(node, snake)
                     for x, y in enemy_neighbours:
                         trajectory = translate(snake.get_head(), (x, y))
-                        if DEBUG:
-                            print(trajectory)
-                            print(node)
                         if (trajectory == 'down' and (node == (x-1, y+1) or
                             node == (x+1, y+1))):
                             if DEBUG:
