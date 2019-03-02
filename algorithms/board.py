@@ -191,8 +191,6 @@ class Board(object):
         #         ]
         # horizontal_neighbours = neighbours[:2]
         # vertical_neighbours = neighbours[2:]
-        # valid_neighbours = self.get_neighbours(node, my_snake, distance_to_node,
-        #                                        foods_in_path)
         if (distance_to_node == 1
             and translate(my_snake.get_head(), node) in self.bad_moves):
             cost += 99999
@@ -235,6 +233,12 @@ class Board(object):
                                 cost += 10
                             else:
                                 cost += 5
+        valid_neighbours = self.get_neighbours(node, my_snake, distance_to_node,
+                                               foods_in_path)
+        for snake in self.other_snakes:
+            for body in snake.coordinates:
+                if body in valid_neighbours:
+                    cost += 1
         #         if (snake.get_head() in neighbours
         #             and snake.length > my_snake.length):
         #             cost += 10
