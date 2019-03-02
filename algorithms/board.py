@@ -417,6 +417,8 @@ class Board(object):
                                         self.samaritan.get_head(), neighbour))
                 else:
                     self.bad_moves.append(move)
+                    print("Bad objective and bad move: {}, {}".format(
+                                                            objective, move))
                     objective, move = None, None
                     continue
             return (objective, move)
