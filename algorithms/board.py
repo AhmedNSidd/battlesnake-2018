@@ -205,19 +205,19 @@ class Board(object):
                         if (trajectory == 'down' and (node == (x-1, y+1) or
                             node == (x+1, y+1))):
                             if snake.length > my_snake.length:
-                                cost += 2
+                                cost += 3
                             else:
                                 cost += 1
                         elif (trajectory == 'up' and (node == (x-1, y-1) or
                             node == (x+1, y-1))):
                             if snake.length > my_snake.length:
-                                cost += 2
+                                cost += 3
                             else:
                                 cost += 1
                         elif (trajectory == 'left' and (node == (x-1, y-1) or
                             node == (x-1, y+1))):
                             if snake.length > my_snake.length:
-                                cost += 2
+                                cost += 3
                             else:
                                 cost += 1
                         elif (trajectory == 'right' and (node == (x+1, y-1) or
@@ -409,7 +409,7 @@ class Board(object):
                         foods = 0
                         if neighbour in self.foods:
                             foods += 1
-                        heappush(all_moves, (advanced_floodfill(
+                        heappush(all_moves, (-1 *advanced_floodfill(
                                     self, neighbour, self.samaritan, 1, foods),
                                     self.get_cost(neighbour, self.samaritan, 1,
                                                   foods), neighbour))
