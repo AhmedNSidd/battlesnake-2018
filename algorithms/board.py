@@ -358,6 +358,11 @@ class Board(object):
                     print("We are the biggest, and we don't need food. Attack.")
                     start = time()
                     if objective == None:
+                        objective, move = self.find_path_to_food("Safe")
+                        if DEBUG:
+                            print("Time to find safe food {}ms".format((time() - start) * 1000))
+                    start = time()
+                    if objective == None:
                         objective, move = self.attack_enemy()
                         if DEBUG:
                             print("Time to attack {}ms".format((time() - start) * 1000))
@@ -366,11 +371,6 @@ class Board(object):
                         objective, move = self.find_path_to_my_tail()
                         if DEBUG:
                             print("Time to find path to my tail {}ms".format((time() - start) * 1000))
-                    start = time()
-                    if objective == None:
-                        objective, move = self.find_path_to_food("Safe")
-                        if DEBUG:
-                            print("Time to find safe food {}ms".format((time() - start) * 1000))
                     start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Risky")
