@@ -699,6 +699,7 @@ class Board(object):
         '''Used by Samaritan to find safe food.
         '''
         cost_and_path_to_all_foods = []
+        max = -99999
         for food in self.foods:
             for snake in self.other_snakes:
                 distance = get_manhattan_distance(self.samaritan.get_head(),
