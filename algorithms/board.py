@@ -420,7 +420,7 @@ class Board(object):
             if accessible_to_tail == (None, None):
                 return ('Walling off', 'right', samaritan.id)
             return (None, None, None)
-            
+
     def cornering_enemies(self):
         '''This attack tactic by samaritan corners an enemy if the enemy is
         'going through a tunnel' i.e. there's only one valid move the enemy
@@ -774,16 +774,24 @@ class Board(object):
             for snake in self.other_snakes:
                 space_of_enemy_to_food = get_manhattan_distance(
                                                     snake.get_head(), food)
-                heappush(spaces_of_enemy_to_food, space_of_enemy_to_food)
+                heappush(spaces_of_enemy_to_food, (space_of_enemy_to_food, snake.length))
             food_cost, food_path = a_star(self, self.samaritan.get_head(),
                                                 food, self.samaritan,
                                                 self.max_cost_to_food(risk))
             if food_cost == None:
                 continue
             actual_distance_to_food = len(food_path) - 1
-            if len(self.other_snakes) != 0 and risk == "Safe":
-                if heappop(spaces_of_enemy_to_food) <= actual_distance_to_food:
+            if len(self.other_snakes) != 0:
+                closest_snake_distance, length = heappop(spaces_of_enemy_to_food)
+                if closest_snake_distance < actual_distance_to_food:
                     continue
+                elif (closest_snake_distance == actual_distance_to_food
+                      and length >= self.samaritan):
+                      if length > self.samaritan:
+                          continue
+                      elif risk == 'Safe':
+                          continue
+
             food_coordinates = self.foods[:]
             other_snakes = deepcopy(self.other_snakes)
             samaritan = deepcopy(self.samaritan)
