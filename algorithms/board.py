@@ -6,6 +6,8 @@ from .utils import get_manhattan_distance, translate
 from heapq import heappush, heappop
 from .graph_algorithms import a_star, stall, bfs
 from copy import deepcopy
+from time import time
+
 
 DEBUG = True
 
@@ -301,48 +303,94 @@ class Board(object):
             while True:
                 iteration += 1
                 if iteration < 2: # if this isn't my first iteration then these moves obviously didn't work.
-                    print("First iteration; checking attacking strategies.")
+                    if DEBUG:
+                        print("First iteration; checking attacking strategies.")
+                    start = time()
                     if objective == None:
                         objective, move, enemy_id = self.cornering_enemies()
+                        if DEBUG:
+                            print("Time to corner {}ms".format((time() - start) * 1000))
+                    start = time()
                     if objective == None:
                         objective, move, enemy_id = self.trapping_enemies()
+                        if DEBUG:
+                            print("Time to trap {}ms".format((time() - start) * 1000))
+                    start = time()
                     if objective == None:
                         objective, move, enemy_id = self.walling_enemies()
+                        if DEBUG:
+                            print("Time to wall {}ms".format((time() - start) * 1000))
                 if (self.samaritan.health <= health_limit):
                     print("Samaritan's health is low.")
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Safe")
+                        if DEBUG:
+                            print("Time to find safe food {}ms".format((time() - start) * 1000))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Risky")
+                        if DEBUG:
+                            print("Time to find risky food {}ms".format((time() - start) * 1000))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
+                        if DEBUG:
+                            print("Time to find tail {}ms".format((time() - start) * 1000))
                 elif not self.is_samaritan_biggest():
                     print("Samaritan isn't the biggest; Prioritizing food.")
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Safe")
+                        if DEBUG:
+                            print("Time to find safe food {}ms".format((time() - start) * 1000))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Risky")
+                        if DEBUG:
+                            print("Time to find risky food {}ms".format((time() - start) * 1000))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
+                        if DEBUG:
+                            print("Time to find tail {}ms".format((time() - start) * 1000))
                 else:
                     print("We are the biggest, and we don't need food. Attack.")
+                    start = time()
                     if objective == None:
                         objective, move = self.attack_enemy()
+                        if DEBUG:
+                            print("Time to attack {}ms".format((time() - start) * 1000))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
+                        if DEBUG:
+                            print("Time to find path to my tail {}ms".format((time() - start) * 1000))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Safe")
+                        if DEBUG:
+                            print("Time to find safe food {}ms".format((time() - start) * 1000))
+                    start = time()
                     if objective == None:
                         objective, move = self.find_path_to_food("Risky")
+                        if DEBUG:
+                            print("Time to find risky food {}ms".format((time() - start) * 1000))
                 if objective == None:
+                    start = time()
                     objective, move = stall(self)
+                    if DEBUG:
+                        print("Time to find stall {}ms".format((time() - start) * 1000))
                 if objective != None:
                     if DEBUG:
                         print("My move is {} {}".format(objective, move))
                     if len(self.other_snakes) == 0:
                         return (objective, move)
+                    start = time.time()
                     e_objective, e_move, snake = self.get_best_enemy_attack(
                                                         objective, move)
+                    if DEBUG:
+                        print("Time for paranoia {}ms".format((time() - start) * 1000))
                     if DEBUG:
                         print("The counter move is {} {}".format(e_objective, e_move))
                     if e_objective == None:
