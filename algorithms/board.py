@@ -793,11 +793,11 @@ class Board(object):
                 if min_length > self.samaritan.length:
                     continue
             heuristic = sam_distance_to_food - min_distance
-            heappush(cost_and_path_to_all_foods, (heuristic, food, path, sam_distance_to_food))
+            heappush(cost_to_all_foods, (heuristic, food, path, sam_distance_to_food))
 
-        while cost_and_path_to_all_foods:
+        while cost_to_all_foods:
             heuristic, food, path, actual_distance_to_food = heappop(
-                                                    cost_and_path_to_all_foods)
+                                                    cost_to_all_foods)
             food_coordinates = self.foods[:]
             other_snakes = deepcopy(self.other_snakes)
             samaritan = deepcopy(self.samaritan)

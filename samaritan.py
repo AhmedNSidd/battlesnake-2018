@@ -10,7 +10,7 @@ def static():
     that it's running.
     '''
     return "<!DOCTYPE html><html><body><style>h1, h3 {color: red;font-family:"\
-    "monospace;}</style><h1>Samaritan is NOTT...</h1><h3>A snake created"\
+    "monospace;}</style><h1>Samaritan is running...</h1><h3>A snake created"\
     " by Ahmed Siddiqui</h3></body></html>"
 
 @bottle.route('/static/<path:path>')
