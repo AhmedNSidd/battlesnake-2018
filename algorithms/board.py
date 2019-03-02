@@ -768,17 +768,65 @@ class Board(object):
     def find_path_to_my_tail(self):
         '''A* algorithm used by Samaritan to find a path to his tail.
         '''
-        # print 'Checking path to tail'
+        halfway_x = int((self.width-1)/2)
+        halfway_y = int((self.height-1)/2)
+        center = (halfway_x, halfway_y)
+        if (get_manhattan_distance(self.samaritan.get_head(), center) > int(halfway_x/2)):
+            cost, path_to_center = a_star(self, self.samaritan.get_head(),
+                                                center, self.samaritan)
+            if cost != None:
+                actual_distance_to_center = len(path_to_center) - 1
+                food_coordinates = self.foods[:]
+                other_snakes = deepcopy(self.other_snakes)
+                samaritan = deepcopy(self.samaritan)
+                foods = 0
+                for node_x, node_y in path_to_center[1:]:
+                    if self.grid[node_y][node_x] != EMPTY_SPACE_MAKERS:
+                        if (node_x, node_y) in food_coordinates:
+                            food_coordinates.remove((node_x, node_y))
+                            foods += 1
+                        else:
+                            if (node_x, node_y) not in samaritan.coordinates:
+                                for snake in other_snakes:
+                                    if (node_x, node_y) in snake.coordinates:
+                                        x = snake.coordinates.index((node_x,
+                                                                     node_y))
+                                        if x == 0:
+                                            break
+                                        snake.coordinates = snake.coordinates[:x]
+                new_snake_coords = []
+                samaritan.length += foods
+                if samaritan.length-1 <= actual_distance_to_center:
+                    for x in range(samaritan.length-1):
+                        xcoord, ycoord = path_to_center[-1-x]
+                        new_snake_coords.append((xcoord, ycoord))
+                    samaritan.coordinates = new_snake_coords
+                else:
+                    for x in range(actual_distance_to_center-(foods-1)):
+                        samaritan.coordinates.pop()
+                    for xcoord, ycoord in path_to_center[1:]:
+                        samaritan.coordinates.insert(0, (xcoord, ycoord))
+                samaritan.coordinates.append(samaritan.coordinates[-1])
+                new_board = Board(self.generate_data_dictionary(food_coordinates,
+                                                        other_snakes, samaritan), 1)
+                distance_to_tail, path_to_tail = bfs(new_board,
+                                                    new_board.samaritan.get_head(),
+                                                    new_board.samaritan.get_tail(),
+                                                    new_board.samaritan)
+                if distance_to_tail != None:
+                    return ("Going to center", translate(
+                                self.samaritan.get_head(),path_to_center[1]))
+
         cost_of_tail, path_to_tail = a_star(self,
                                             self.samaritan.get_head(),
                                             self.samaritan.get_tail(),
                                             self.samaritan)
-        print (cost_of_tail, path_to_tail)
         # print 'path found: ', path_to_tail
         if path_to_tail == None or len(path_to_tail) == 1:
             return (None, None)
         return ('Going To My Tail', translate(self.samaritan.get_head(),
                            path_to_tail[1]))
+                           
     def attack_enemy(self):
         '''Used to attack the node that the enemy is most likely going to go to.
         '''
