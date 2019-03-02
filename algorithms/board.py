@@ -350,17 +350,10 @@ class Board(object):
             return (objective, move)
         elif self.mode == 2:
             samaritan = self.other_snakes[-1]
-<<<<<<< HEAD
-            accessible_to_tail = a_star(self, samaritan.get_head(),
-                                        samaritan.get_tail(), samaritan)
-            if accessible_to_tail == (None, None):
-                return ('Walling off', 'right', samaritan.id) # if I can't access my own tail after I make my move, then return "walling off" to suggest that we shouldn't make this move.
-=======
             accessible_to_tail = bfs(self, samaritan.get_head(),
                                      samaritan.get_tail(), samaritan)
             if accessible_to_tail == (None, None):
                 return ('Walling off', 'right', samaritan.id)
->>>>>>> deb7745115608f397f74bed75a77fdb0c0769edb
             objective, move, enemy_id = self.cornering_enemies()
             if not objective == None:
                 return (objective, move, enemy_id)
