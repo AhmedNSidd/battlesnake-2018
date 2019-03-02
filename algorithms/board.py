@@ -38,8 +38,6 @@ class Board(object):
         self.other_snakes = [self._parse_snake_object(snake)
                              for snake in data['board']['snakes']
                              if self.samaritan.id != snake['id']]
-        for snake in self.other_snakes:
-            print(snake)
         self.mode = mode
         self.bad_moves = []
         self._mark_grid()
@@ -197,7 +195,8 @@ class Board(object):
         for snake in self.all_snake_objects():
             if snake != my_snake:
                 if snake.length >= my_snake.length:
-                    enemy_neighbours = self.get_neighbours(node, snake)
+                    enemy_neighbours = self.get_neighbours(snake.get_head(),
+                                                           snake)
                     for x, y in enemy_neighbours:
                         trajectory = translate(snake.get_head(), (x, y))
                         if (trajectory == 'down' and (node == (x-1, y+1) or
