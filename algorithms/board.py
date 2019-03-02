@@ -71,8 +71,8 @@ class Board(object):
         This method marks the entire grid with my snake, enemy snakes, foods,
         and empty spaces
         '''
-        for x in range(self.height):
-            self.grid.append([EMPTY_SPACE_MAKERS for y in range(self.width)])
+        for row in range(self.height):
+            self.grid.append([EMPTY_SPACE_MAKERS for col in range(self.width)])
 
         for x, y in self.samaritan.coordinates[1:-1]:
             self.grid[y][x] = SAMARITAN_BODY_MARKER
@@ -438,40 +438,6 @@ class Board(object):
             if accessible_to_tail == (None, None):
                 return ('Walling off', 'right', samaritan.id)
             return (None, None, None)
-
-
-
-        # if self.mode == 0:
-        #     iteration = 0
-        #
-        #     objective = None
-        #     while True:
-        #         iteration += 1
-        #         if iteration < 2: # if this isn't my first iteration then these moves obviously didn't work.
-        #             print("First iteration; checking attacking strategies.")
-        #
-        #
-        #         # if objective != None:
-        #         #     if DEBUG:
-        #         #         print("My move is", objective, move)
-        #         #     if len(self.other_snakes) == 0:
-        #         #         return (objective, move)
-
-                    # if DEBUG:
-        #         #         print("The counter move is", e_objective, e_move)
-        #         #     if e_objective == None:
-        #         #         return (objective, move)
-        #         #     else:
-        #         #         if iteration > 4:
-        #         #             return ('Best Bad Move', self.bad_moves[1])
-        #         #         else:
-        #         #             self.bad_moves.append(move)
-        #         #             objective, move = None, None
-        #         # else:
-        #         #     return ('Death', 'left')
-        #     return (objective, move)
-        # elif self.mode == 2:
-# that we shouldn't make this move.
 
     def cornering_enemies(self):
         '''
