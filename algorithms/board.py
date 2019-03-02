@@ -822,7 +822,7 @@ class Board(object):
             samaritan.length += foods
             if samaritan.length-1 <= actual_distance_to_food:
                 for x in range(samaritan.length-1):
-                    xcoord, ycoord = food_path[-1-x]
+                    xcoord, ycoord = path[-1-x]
                     new_snake_coords.append((xcoord, ycoord))
                 samaritan.coordinates = new_snake_coords
             else:
