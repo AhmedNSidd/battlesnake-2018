@@ -1051,6 +1051,7 @@ class Board(object):
               "body": [],
               "health": enemies[x].health,
               "id": enemies[x].id,
+              "name": enemies[x].name
              })
             for coordinate_x, coordinate_y in enemies[x].coordinates:
                 data['board']['snakes'][x]['body'].append({
@@ -1062,6 +1063,7 @@ class Board(object):
             "body": [],
             "health": samaritan.health,
             "id": samaritan.id,
+            "name": samaritan.name,
         }
         for coordinate_x, coordinate_y in samaritan.coordinates:
             data['you']['body'].append({
