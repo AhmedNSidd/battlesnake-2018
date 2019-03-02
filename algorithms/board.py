@@ -204,33 +204,33 @@ class Board(object):
                             if DEBUG:
                                 print("Risky node")
                             if snake.length > my_snake.length:
-                                cost += 25
-                            else:
                                 cost += 10
+                            else:
+                                cost += 5
                         elif (trajectory == 'up' and (node == (x-1, y-1) or
                             node == (x+1, y-1))):
                             if DEBUG:
                                 print("Risky node")
                             if snake.length > my_snake.length:
-                                cost += 25
-                            else:
                                 cost += 10
+                            else:
+                                cost += 5
                         elif (trajectory == 'left' and (node == (x-1, y-1) or
                             node == (x-1, y+1))):
                             if DEBUG:
                                 print("Risky node")
                             if snake.length > my_snake.length:
-                                cost += 25
-                            else:
                                 cost += 10
+                            else:
+                                cost += 5
                         elif (trajectory == 'right' and (node == (x+1, y-1) or
                             node == (x+1, y+1))):
                             if DEBUG:
                                 print("Risky node")
                             if snake.length > my_snake.length:
-                                cost += 25
-                            else:
                                 cost += 10
+                            else:
+                                cost += 5
         #         if (snake.get_head() in neighbours
         #             and snake.length > my_snake.length):
         #             cost += 10
@@ -351,7 +351,18 @@ class Board(object):
                 if e_objective == None:
                     break
                 elif i > 2:
-                    return ('Best Bad Move', self.bad_moves[1])
+                    neighbours = self.get_neighbours(self.samaritan.get_head(),
+                                                     self.samaritan)
+                    all_moves = []
+                    for neighbour in neighbours:
+                        foods = 0
+                        if neighbour in self.foods:
+                            foods += 1
+                        heappush(all_moves, (get_cost(neighbour, self.samaritan,
+                                                      1, foods), neighbour))
+                    min_cost, neighbour = heappop(all_moves)
+                    return ('Best Bad Move', translate(
+                                        self.samaritan.get_head(), neighbour))
                 else:
                     self.bad_moves.append(move)
                     objective, move = None, None
