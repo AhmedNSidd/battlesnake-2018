@@ -803,7 +803,7 @@ class Board(object):
             other_snakes = deepcopy(self.other_snakes)
             samaritan = deepcopy(self.samaritan)
             foods = 0
-            for node_x, node_y in food_path[1:]:
+            for node_x, node_y in path[1:]:
                 if self.grid[node_y][node_x] != EMPTY_SPACE_MAKERS:
                     if (node_x, node_y) in food_coordinates:
                         food_coordinates.remove((node_x, node_y))
@@ -828,7 +828,7 @@ class Board(object):
             else:
                 for x in range(actual_distance_to_food-(foods-1)):
                     samaritan.coordinates.pop()
-                for xcoord, ycoord in food_path[1:]:
+                for xcoord, ycoord in path[1:]:
                     samaritan.coordinates.insert(0, (xcoord, ycoord))
             samaritan.coordinates.append(samaritan.coordinates[-1])
             new_board = Board(self.generate_data_dictionary(food_coordinates,
