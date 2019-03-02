@@ -198,6 +198,9 @@ class Board(object):
                     enemy_neighbours = self.get_neighbours(node, snake)
                     for x, y in enemy_neighbours:
                         trajectory = translate(snake.get_head(), (x, y))
+                        if DEBUG:
+                            print(trajectory)
+                            print(node)
                         if (trajectory == 'down' and (node == (x-1, y+1) or
                             node == (x+1, y+1))):
                             if DEBUG:
@@ -830,7 +833,7 @@ class Board(object):
         center = (halfway_x, halfway_y)
         if (get_manhattan_distance(self.samaritan.get_head(), center) > int(halfway_x/2)):
             cost, path_to_center = a_star(self, self.samaritan.get_head(),
-                                                center, self.samaritan)    
+                                                center, self.samaritan)
             if cost != None:
                 actual_distance_to_center = len(path_to_center) - 1
                 food_coordinates = self.foods[:]
