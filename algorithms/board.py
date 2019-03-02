@@ -300,6 +300,11 @@ class Board(object):
                 else:
                     print("We are the biggest, and we don't need food. Attack.")
                     if objective == None:
+                        objective, move = self.find_path_to_food("Safe")
+                        if DEBUG:
+                            print("Time to find safe food {}ms".format((time() - start) * 1000))
+                    start = time()
+                    if objective == None:
                         objective, move = self.attack_enemy()
                     if objective == None:
                         objective, move = self.find_path_to_my_tail()
@@ -322,7 +327,21 @@ class Board(object):
                         break
                     else:
                         if iteration > 4:
-                            return ('Best Bad Move', self.bad_moves[1])
+                            neighbours = self.get_neighbours(
+                                    self.samaritan.get_head(), self.samaritan)
+                            all_moves = []
+                            for neighbour in neighbours:
+                                foods = 0
+                                if neighbour in self.foods:
+                                    foods += 1
+                                heappush(all_moves, (self.get_cost(neighbour,
+                                                                   self.samaritan,
+                                                                   1,
+                                                                   foods),
+                                                                   neighbour))
+                            min_cost, neighbour = heappop(all_moves)
+                            return ('Best Bad Move', translate(
+                                        self.samaritan.get_head(), neighbour))
                         else:
                             self.bad_moves.append(move)
                             objective, move = None, None
@@ -331,10 +350,17 @@ class Board(object):
             return (objective, move)
         elif self.mode == 2:
             samaritan = self.other_snakes[-1]
+<<<<<<< HEAD
             accessible_to_tail = a_star(self, samaritan.get_head(),
                                         samaritan.get_tail(), samaritan)
             if accessible_to_tail == (None, None):
                 return ('Walling off', 'right', samaritan.id) # if I can't access my own tail after I make my move, then return "walling off" to suggest that we shouldn't make this move.
+=======
+            accessible_to_tail = bfs(self, samaritan.get_head(),
+                                     samaritan.get_tail(), samaritan)
+            if accessible_to_tail == (None, None):
+                return ('Walling off', 'right', samaritan.id)
+>>>>>>> deb7745115608f397f74bed75a77fdb0c0769edb
             objective, move, enemy_id = self.cornering_enemies()
             if not objective == None:
                 return (objective, move, enemy_id)
@@ -679,8 +705,9 @@ class Board(object):
     def find_path_to_food(self, risk):
         '''Used by Samaritan to find safe food.
         '''
-        cost_and_path_to_all_foods = []
+        cost_to_all_foods = []
         for food in self.foods:
+<<<<<<< HEAD
             for snake in self.other_snakes:
                 distance = get_manhattan_distance(self.samaritan.get_head(),
                                                  food) - get_manhattan_distance(
@@ -704,11 +731,39 @@ class Board(object):
             if len(self.other_snakes) != 0 and risk == "Safe":
                 if heappop(spaces_of_enemy_to_food) <= actual_distance_to_food:
                     continue
+=======
+            cost, path = a_star(self, self.samaritan.get_head(), food,
+                                self.samaritan, self.max_cost_to_food(risk))
+            if cost == None:
+                continue
+            sam_distance_to_food = len(path) - 1
+            min_distance = 999999
+            min_length = 0
+            for snake in self.other_snakes:
+                e_distance_to_food, e_path = bfs(self, snake.get_head(), food,
+                                                 snake)
+                if e_distance_to_food == None:
+                    continue
+                if e_distance_to_food < min_distance:
+                    min_distance = e_distance_to_food
+                    min_length = snake.length
+            if min_distance < sam_distance_to_food:
+                continue
+            elif min_distance == sam_distance_to_food:
+                if min_length > self.samaritan.length:
+                    continue
+            heuristic = sam_distance_to_food - min_distance
+            heappush(cost_to_all_foods, (heuristic, food, path, sam_distance_to_food))
+
+        while cost_to_all_foods:
+            heuristic, food, path, actual_distance_to_food = heappop(
+                                                    cost_to_all_foods)
+>>>>>>> deb7745115608f397f74bed75a77fdb0c0769edb
             food_coordinates = self.foods[:]
             other_snakes = deepcopy(self.other_snakes)
             samaritan = deepcopy(self.samaritan)
             foods = 0
-            for node_x, node_y in food_path[1:]:
+            for node_x, node_y in path[1:]:
                 if self.grid[node_y][node_x] != EMPTY_SPACE_MAKERS:
                     if (node_x, node_y) in food_coordinates:
                         food_coordinates.remove((node_x, node_y))
@@ -727,13 +782,13 @@ class Board(object):
             samaritan.length += foods
             if samaritan.length-1 <= actual_distance_to_food:
                 for x in range(samaritan.length-1):
-                    xcoord, ycoord = food_path[-1-x]
+                    xcoord, ycoord = path[-1-x]
                     new_snake_coords.append((xcoord, ycoord))
                 samaritan.coordinates = new_snake_coords
             else:
                 for x in range(actual_distance_to_food-(foods-1)):
                     samaritan.coordinates.pop()
-                for xcoord, ycoord in food_path[1:]:
+                for xcoord, ycoord in path[1:]:
                     samaritan.coordinates.insert(0, (xcoord, ycoord))
             samaritan.coordinates.append(samaritan.coordinates[-1])
             new_board = Board(self.generate_data_dictionary(food_coordinates,
@@ -745,7 +800,12 @@ class Board(object):
             if distance_to_tail == None:
                 continue
             return ('{} food'.format(risk), translate(
+<<<<<<< HEAD
                                     self.samaritan.get_head(), food_path[1]))
+=======
+                                    self.samaritan.get_head(), path[1]))
+
+>>>>>>> deb7745115608f397f74bed75a77fdb0c0769edb
         return (None, None)
 
     def find_path_to_my_tail(self):
