@@ -2,6 +2,7 @@ import bottle
 import os
 from algorithms.board import Board
 from time import time
+from api import ping_response, end_response
 
 
 @bottle.route('/')
@@ -52,19 +53,24 @@ def move():
         'taunt': objective
         }
 
-@bottle.get('/end')
+@bottle.post('/end')
 def end():
-    '''
-    This endpoint isn't hit until you go in the browser and manually hit it.
-    The reason you would want to do this is to store the runtimes in the text
-    file since samaritan.py was run. I list the runtimes from greatest to lowest
-    hence there is need to negate the runtimes since I am using a min-heap to
-    store the runtimes.
-    '''
     data = bottle.request.json
-    return bottle.HTTPResponse(
-        status=200
-    )
+
+    """
+    TODO: If your snake AI was stateful,
+        clean up any stateful objects here.
+    """
+
+    return end_response()
+
+@bottle.post('/ping')
+def ping():
+    """
+    A keep-alive endpoint used to prevent cloud application platforms,
+    such as Heroku, from sleeping the application instance.
+    """
+    return ping_response()
 
 application = bottle.default_app()
 
