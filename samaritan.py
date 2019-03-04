@@ -3,7 +3,7 @@ import os
 from algorithms.board import Board
 from time import time
 from api import ping_response, end_response
-
+from algorithms.utils import convert_2018_api_to_2019
 
 @bottle.route('/')
 def static():
@@ -43,7 +43,10 @@ def move():
     what move and taunt we want to return by creating an instance of the game
     state and getting an action for our snake, Samaritan.
     '''
-    environment = Board(bottle.request.json)
+    data = bottle.request.json
+    # Comment the line below for 2019 game server, uncomment for 2018.
+    data = convert_2018_api_to_2019(data)
+    environment = Board(data)
     start = time()
     objective, action = environment.get_action()
     print("Time to get move: {}ms".format((time() - start) * 1000))
