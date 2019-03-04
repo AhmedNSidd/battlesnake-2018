@@ -2,7 +2,7 @@ from .snake import Snake
 from .constants import (EMPTY_SPACE_MAKERS, FOOD_MARKER, SAMARITAN_HEAD_MARKER,
     SAMARITAN_BODY_MARKER, ENEMY_SNAKE_HEAD_MARKER, ENEMY_SNAKE_BODY_MARKER,
     SNAKE_TAIL_MARKER)
-from .utils import get_manhattan_distance, translate, convert_2019_api_to_2018
+from .utils import get_manhattan_distance, translate
 from heapq import heappush, heappop
 from .graph_algorithms import a_star, stall, bfs, advanced_floodfill
 from copy import deepcopy
@@ -1102,7 +1102,7 @@ class Board(object):
                 'x': coordinate_x,
                 'y': coordinate_y
             })
-        return convert_2019_api_to_2018(data)
+        return data
 
     def max_cost_to_food(self, mode):
         '''

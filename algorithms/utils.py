@@ -20,40 +20,69 @@ def translate(start, target):
         elif start[0] < target[0]:
             return "right"
 
-def convert_2019_api_to_2018(api_2019):
-    width = api_2019['board']['width']
-    height = api_2019['board']['height']
-    foods = api_2019['board']['food'] # list of json with foods
-    you = api_2019['you']
-    all_snakes = api_2019['board']['snakes']
-    api_2018 = {
-        "food": {
-            "data": foods
+def convert_2018_api_to_2019(api_2018):
+    width = api_2018['width']
+    height = api_2018['height']
+    foods = api_2018['food']['data']
+    all_snakes = api_2018['snakes']['data']
+    you = api_2018['you']
+    api_2019 = {
+        "board": {
+            "food": foods,
+            "width": width,
+            "height": height,
+            "snakes": []
         },
-        "height": height,
-        "width": width,
-        "snakes": {
-            "data": []
+        "you": {
+            "id": you['id'],
+            "name": you['name'],
+            "health": you['health'],
+            "body": you['body']['data']
         }
     }
-    for x in range(0, all_snakes):
-        api_2018['snakes']['data'].append({
-            "body": {
-                "data": []
-            },
-            "health": all_snakes[x].health,
-            "id": all_snakes[x].id,
-            "name": all_snakes[x].name,
+    for snake in all_snakes:
+        api_2019['board']['snakes'].append({
+            "id": snake['id'],
+            "name": snake['name'],
+            "health": snake['health'],
+            "body": snake['body']['data']
         })
-        api_2018['snakes']['data'][x]['body']['data'].append(all_snakes['body'])
+    return api_2019
 
-    api_2018['you']['data'] = {
-        "body": {
-            "data": []
-        },
-        "health": you.health,
-        "id": you.id,
-        "name": you.name,
-    }
-    api_2018['you']['data']['body']['data'] = you['body']
-    return api_2018
+# def convert_2019_api_to_2018(api_2019):
+#     width = api_2019['board']['width']
+#     height = api_2019['board']['height']
+#     foods = api_2019['board']['food'] # list of json with foods
+#     you = api_2019['you']
+#     all_snakes = api_2019['board']['snakes']
+#     api_2018 = {
+#         "food": {
+#             "data": foods
+#         },
+#         "height": height,
+#         "width": width,
+#         "snakes": {
+#             "data": []
+#         }
+#     }
+#     for x in range(0, all_snakes):
+#         api_2018['snakes']['data'].append({
+#             "body": {
+#                 "data": []
+#             },
+#             "health": all_snakes[x].health,
+#             "id": all_snakes[x].id,
+#             "name": all_snakes[x].name,
+#         })
+#         api_2018['snakes']['data'][x]['body']['data'].append(all_snakes['body'])
+#
+#     api_2018['you']['data'] = {
+#         "body": {
+#             "data": []
+#         },
+#         "health": you.health,
+#         "id": you.id,
+#         "name": you.name,
+#     }
+#     api_2018['you']['data']['body']['data'] = you['body']
+#     return api_2018
