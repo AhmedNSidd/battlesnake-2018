@@ -1,5 +1,0 @@
-node_modules
-build/
-*.o
-callgrind.out.*
-.vscode/settings.json
