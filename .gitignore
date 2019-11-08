@@ -1,0 +1,6 @@
+*.pyc
+__pycache__/*
+.DS_Store
+algorithms/.DS_Store
+battlesnake-venv/
+enemy-snakes/
