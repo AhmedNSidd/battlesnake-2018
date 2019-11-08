@@ -3,13 +3,13 @@ from .utils import get_manhattan_distance, translate
 from collections import deque
 
 def a_star(board, start, target, snake, cost_limit=99999):
-    '''
+    """
     A pathfinding algorithm similar to djiskta's algorithm that find's the
     shortest path from start to target with the lowest cost (least dangerous)
 
     It's different to A* in that it takes into account food on the path to the
     destination and it also takes into account the dynamic nature of the game.
-    '''
+    """
     p_q = [(get_heuristic(start, target), [start],
             get_heuristic(start, target), (1 if start in board.foods else 0))]
     processed = set()
@@ -38,10 +38,10 @@ def a_star(board, start, target, snake, cost_limit=99999):
     return (None, None)
 
 def stall(board):
-    '''An algorithm that is used as a last resort by Samaritan when it's trapped
+    """An algorithm that is used as a last resort by Samaritan when it's trapped
     Sometimes it's also used when A* can't find a way out, but there is, infact,
     a way out.
-    '''
+    """
     possible_routes = []
     neighbours_of_samaritan = board.get_neighbours(board.samaritan.get_head(),
                                                    board.samaritan)
@@ -58,15 +58,15 @@ def stall(board):
                 visited_nodes.add(neighbour)
                 heappush(possible_routes, (length_of_path+1, path + [neighbour],
                                            visited_nodes))
-    return ('Stalling', translate(board.samaritan.get_head(), path[0]))
+    return ("Stalling", translate(board.samaritan.get_head(), path[0]))
 
 def get_heuristic(curr_node, target):
-    '''Returns the heuristic cost for A*
-    '''
+    """Returns the heuristic cost for A*
+    """
     return get_manhattan_distance(curr_node, target)
 
-'''Bottom 2 functions are not currently being used however they may be helpful
-in the future'''
+"""Bottom 2 functions are not currently being used however they may be helpful
+in the future"""
 
 # def floodfill(board, snake):
 #     processed = set()
@@ -82,8 +82,8 @@ in the future'''
 #     return len(processed) - 1
 #
 def advanced_floodfill(board, node, snake, distance_to_node=0, foods=0):
-    '''Advanced version accounts for moving snakes
-    '''
+    """Advanced version accounts for moving snakes
+    """
     processed = set()
     start = snake.get_head()
     to_be_processed = [(snake.get_head(), 0)]
@@ -97,10 +97,10 @@ def advanced_floodfill(board, node, snake, distance_to_node=0, foods=0):
     return len(processed) - 1
 
 def bfs(board, start, target, snake):
-    '''
+    """
     Uses bfs to see if a path is available from start to target. Returns
     true if a path exists, else false.
-    '''
+    """
     queue = deque([(0, [start], (1 if start in board.foods else 0))])
     processed = set([start])
     while queue:

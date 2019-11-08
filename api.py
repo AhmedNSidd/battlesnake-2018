@@ -21,7 +21,7 @@ def start_response(color):
     )
 
 def move_response(move):
-    assert move in ['up', 'down', 'left', 'right'], \
+    assert move in ["up", "down", "left", "right"], \
         "Move must be one of [up, down, left, right]"
 
     return HTTPResponse(
