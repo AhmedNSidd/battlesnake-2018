@@ -8,7 +8,7 @@ from .graph_algorithms import a_star, stall, bfs, advanced_floodfill
 from copy import deepcopy
 from time import time
 
-DEBUG = False
+DEBUG = True
 
 class Board(object):
     '''
@@ -868,7 +868,8 @@ class Board(object):
         return (None, None)
 
     def find_path_to_my_tail(self):
-        '''A* algorithm used by Samaritan to find a path to his tail.
+        '''A* algorithm used by Samaritan to find a path to his tail, but makes
+        sure we go near the center first.
         '''
         # print 'Checking path to tail'
         halfway_x = int((self.width-1)/2)
