@@ -1,0 +1,6 @@
+{
+    "python.pythonPath": "/Users/ahmedsiddiqui/Desktop/Workspace/Virtual_Environments/samaritan-venv/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "files.autoSave": true,
+}

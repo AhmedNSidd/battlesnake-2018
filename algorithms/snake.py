@@ -54,3 +54,11 @@ class Snake(object):
             if node != snake_coordinates[-1]:
                 snake_coordinates.append(node)
         return snake_coordinates
+
+class EnemySnake(Snake):
+
+    def get_action(self):
+        pass # When getting action of enemy snakes, it'll depend.
+
+class MySnake(Snake):
+    pass

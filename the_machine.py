@@ -4,6 +4,7 @@ from algorithms.board import Board
 from time import time
 from api import ping_response, end_response
 from algorithms.utils import convert_2018_api_to_2019
+from algorithms.strategy_controllers import EfficientStrategy
 
 @bottle.route("/")
 def static():
@@ -43,9 +44,9 @@ def move():
     data = bottle.request.json
     # Comment the line below for 2019 game server, uncomment for 2018.
     data = convert_2018_api_to_2019(data)
-    environment = Board(data)
+    board = Board(data)
     start = time()
-    objective, action = environment.get_action()
+    objective, action = EfficientStrategy.get_action(board, board.my_snake)
     print("Time to get move: {}ms".format((time() - start) * 1000))
     print(objective, action)
     return {
@@ -78,5 +79,5 @@ if __name__ == "__main__":
         bottle.run(
             application,
             host=os.getenv("IP", "0.0.0.0"),
-            port=os.getenv("PORT", "8099"),
+            port=os.getenv("PORT", "9226"),
             debug=True)

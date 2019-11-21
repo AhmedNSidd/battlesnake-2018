@@ -20,6 +20,69 @@ def translate(start, target):
         elif start[0] < target[0]:
             return "right"
 
+def max_cost_to_food(height, width, mode):
+    """
+    Determines the max cost to food depending on the size of the board.
+    If Samaritan is going for risky food then the cost limit to the food is
+    going to be higher.
+    """
+    if mode == "Risky":
+        return height + width
+    if mode == "Safe":
+        return (height + width)/6
+
+
+def generate_data_dictionary(board, foods, enemies, my_snake):
+    """
+    This function generates the same request JSON that the game server sends
+    us (given information about the game board entity location). The purpose
+    of this is to create another board instance somewhere else. In order to
+    do that, I need the same JSON request formatting that was used by the
+    game server, hence the structure of the data dictionary below is based
+    on that JSON request.
+    """
+    data = {
+        "board": {
+            "height":board.height,
+            "width":board.width,
+                "food":[],
+                "snakes":[]
+        },
+    }
+
+    for food_x, food_y in foods:
+        data["board"]["food"].append({
+            "x": food_x,
+            "y": food_y
+        })
+
+    for x in range(len(enemies)):
+        data["board"]["snakes"].append({
+            "body": [],
+            "health": enemies[x].health,
+            "id": enemies[x].id,
+            "name": enemies[x].name
+            })
+        for coordinate_x, coordinate_y in enemies[x].coordinates:
+            data["board"]["snakes"][x]["body"].append({
+                "x": coordinate_x,
+                "y": coordinate_y
+            })
+
+    data["you"] = {
+        "body": [],
+        "health": my_snake.health,
+        "id": my_snake.id,
+        "name": my_snake.name,
+    }
+    for coordinate_x, coordinate_y in my_snake.coordinates:
+        data["you"]["body"].append({
+            "x": coordinate_x,
+            "y": coordinate_y
+        })
+    return data
+
+
 def convert_2018_api_to_2019(api_2018):
     width = api_2018["width"]
     height = api_2018["height"]
