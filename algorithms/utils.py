@@ -20,17 +20,6 @@ def translate(start, target):
         elif start[0] < target[0]:
             return "right"
 
-def max_cost_to_food(height, width, mode):
-    """
-    Determines the max cost to food depending on the size of the board.
-    If Samaritan is going for risky food then the cost limit to the food is
-    going to be higher.
-    """
-    if mode == "Risky":
-        return height + width
-    if mode == "Safe":
-        return (height + width)/6
-
 
 def generate_data_dictionary(board, foods, enemies, my_snake):
     """

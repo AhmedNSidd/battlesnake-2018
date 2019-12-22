@@ -4,7 +4,7 @@ from algorithms.board import Board
 from time import time
 from api import ping_response, end_response
 from algorithms.utils import convert_2018_api_to_2019
-from algorithms.strategy_controllers import EfficientStrategy
+from algorithms.strategy_controllers import SmallSnakeStrategy
 
 @bottle.route("/")
 def static():
@@ -46,7 +46,7 @@ def move():
     data = convert_2018_api_to_2019(data)
     board = Board(data)
     start = time()
-    objective, action = EfficientStrategy.get_action(board, board.my_snake)
+    objective, action = SmallSnakeStrategy.get_action(board, board.my_snake)
     print("Time to get move: {}ms".format((time() - start) * 1000))
     print(objective, action)
     return {

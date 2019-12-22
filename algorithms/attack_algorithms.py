@@ -11,7 +11,7 @@ def attack_enemy(board):
     """
     attack_points = []
     for snake in board.other_snakes:
-        neighbours = board.get_neighbours(snake.get_head(), snake)
+        neighbours = board.get_valid_neighbours(snake.get_head(), snake)
         if len(neighbours) == 0:
             continue
         heappush(attack_points, (get_manhattan_distance(
@@ -38,14 +38,14 @@ def cornering_enemies(board):
     """
     for snake in board.other_snakes:
         distance = 2
-        neighbours = board.get_neighbours(snake.get_head(), snake)
+        neighbours = board.get_valid_neighbours(snake.get_head(), snake)
         if len(neighbours) != 1:
             continue
         curr_node = snake.get_head()
         while len(neighbours) == 1:
             prev_node = curr_node
             curr_node = neighbours[0]
-            neighbours = board.get_neighbours(curr_node, snake, distance)
+            neighbours = board.get_valid_neighbours(curr_node, snake, distance)
             distance += 1
             if prev_node in neighbours:
                 neighbours.remove(prev_node)
@@ -126,13 +126,13 @@ def trapping_enemies(board):
                         move = "up"
                 elif (board.samaritan.get_head() == (board.width-2, ycoord+1)
                         and direction_of_enemy == "down"
-                        and (len(board.get_neighbours(snake.get_head(),
+                        and (len(board.get_valid_neighbours(snake.get_head(),
                                                     snake)) <= 1)
                         and board.is_valid_move("down")):
                         move = "down"
                 elif (board.samaritan.get_head() == (board.width-2, ycoord-1)
                         and direction_of_enemy == "up"
-                        and (len(board.get_neighbours(snake.get_head(),
+                        and (len(board.get_valid_neighbours(snake.get_head(),
                                                     snake, 1)) <= 1)
                         and board.is_valid_move("up")):
                         move = "up"
@@ -158,13 +158,13 @@ def trapping_enemies(board):
                         move = "up"
                 elif (board.samaritan.get_head() == (1, ycoord+1)
                         and direction_of_enemy == "down"
-                        and (len(board.get_neighbours(snake.get_head(),
+                        and (len(board.get_valid_neighbours(snake.get_head(),
                                                     snake, 1)) <= 1)
                         and board.is_valid_move("down")):
                         move = "down"
                 elif (board.samaritan.get_head() == (1, ycoord-1)
                         and direction_of_enemy == "up"
-                        and (len(board.get_neighbours(snake.get_head(),
+                        and (len(board.get_valid_neighbours(snake.get_head(),
                                                     snake, 1)) <= 1)
                         and board.is_valid_move("up")):
                         move = "up"
@@ -190,13 +190,13 @@ def trapping_enemies(board):
                         move = "left"
                 elif (board.samaritan.get_head() == (xcoord+1, board.height-2)
                         and direction_of_enemy == "right"
-                        and (len(board.get_neighbours(snake.get_head(),
+                        and (len(board.get_valid_neighbours(snake.get_head(),
                                                     snake, 1)) <= 1)
                         and board.is_valid_move("right")):
                         move = "right"
                 elif (board.samaritan.get_head() == (xcoord-1, board.height-2)
                         and direction_of_enemy == "left"
-                        and (len(board.get_neighbours(snake.get_head(),
+                        and (len(board.get_valid_neighbours(snake.get_head(),
                                                     snake, 1)) <= 1)
                         and board.is_valid_move("left")):
                         move = "left"
@@ -222,13 +222,13 @@ def trapping_enemies(board):
                         move = "left"
                 elif (board.samaritan.get_head() == (xcoord+1, 1)
                         and direction_of_enemy == "right"
-                        and (len(board.get_neighbours(snake.get_head(),
+                        and (len(board.get_valid_neighbours(snake.get_head(),
                                                     snake, 1)) <= 1)
                         and board.is_valid_move("right")):
                         move = "right"
                 elif (board.samaritan.get_head() == (xcoord-1, 1)
                         and direction_of_enemy == "left"
-                        and (len(board.get_neighbours(snake.get_head(),
+                        and (len(board.get_valid_neighbours(snake.get_head(),
                                                     snake, 1)) <= 1)
                         and board.is_valid_move("left")):
                         move = "left"
@@ -246,7 +246,7 @@ def walling_enemies(board):
     """
     if len(board.other_snakes) == 0:
         return (None, None, None)
-    neighbours = board.get_neighbours(board.samaritan.get_head(),
+    neighbours = board.get_valid_neighbours(board.samaritan.get_head(),
                                         board.samaritan)
     moves_to_edge = []
     for neighbour in neighbours:
@@ -401,7 +401,7 @@ def get_best_enemy_attack(board, objective, move):
 
     closest_snake = []
     for snake in other_snakes:
-        neighbours = board.get_neighbours(snake.get_head(), snake)
+        neighbours = board.get_valid_neighbours(snake.get_head(), snake)
         if len(neighbours) == 0:
             continue
         heappush(closest_snake, (get_manhattan_distance(snake.get_head(),
@@ -425,7 +425,7 @@ def get_best_enemy_attack(board, objective, move):
                 new_other_snakes.remove(a_snake)
                 new_other_snakes = new_other_snakes + [new_main_snake]
                 new_main_snake = a_snake
-                neighbours = board.get_neighbours(a_snake.get_head(),
+                neighbours = board.get_valid_neighbours(a_snake.get_head(),
                                                     a_snake)
                 if a_snake.health != 100:
                     a_snake.coordinates.pop()

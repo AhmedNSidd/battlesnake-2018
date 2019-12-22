@@ -56,9 +56,7 @@ class Snake(object):
         return snake_coordinates
 
 class EnemySnake(Snake):
-
-    def get_action(self):
-        pass # When getting action of enemy snakes, it'll depend.
+    pass
 
 class MySnake(Snake):
     pass
