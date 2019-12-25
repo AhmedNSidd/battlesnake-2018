@@ -46,11 +46,11 @@ def move():
     data = convert_2018_api_to_2019(data)
     board = Board(data)
     start = time()
-    objective, action = SmallSnakeStrategy.get_action(board, board.my_snake)
+    objective, move = SmallSnakeStrategy.get_action(board, board.my_snake)
     print("Time to get move: {}ms".format((time() - start) * 1000))
-    print(objective, action)
+    print(objective, move)
     return {
-        "move": action,
+        "move": move,
         "taunt": objective
         }
 
