@@ -48,13 +48,13 @@ In this strategy, the idea is basically that our move everytime will be just a v
 
 # Multiplayer Snake
 
-## Strategy #1: Small Snake + Samaritan Big Boi Strategy
+## Strategy #1: Safe Snake + Samaritan Big Boi Strategy
 
-I want to try a new strategy where I implement two different strategies (or maybe even 3 different strategies, it would depend on what the testing results say) when playing with other people. When playing against 2 or more enemy snakes, I want to minimize my length, going to less dense regions of a map, and making sure I only eat food when I really need to (Small Snake Strategy). When only a 1v1 is left, a different strategy will be implemented where I try to be bigger than the enemy, start to prioritze food, and try some attacking strategies including trying to starve out the enemy (Samaritan Strategy).
+I want to try a new strategy where I implement two different strategies (or maybe even 3 different strategies, it would depend on what the testing results say) when playing with other people. When playing against 2 or more enemy snakes, I want to minimize my length and stay as safe as possible, making sure I only eat food when I really need to (Safe Snake Strategy). When two other snakes are left, I'll still try to stay safe but get safe food when I can. When only a 1v1 is left, a different strategy will be implemented where I try to be bigger than the enemy, start to prioritize food, and try some attacking strategies including trying to starve out the enemy (Samaritan Strategy).
 
 ### Small Snake Strategy
 
-I want to stay as small as possible and stay away from other snakes. So priority will be to travel to less dense regions of the map.
+I want to stay as safe as possible so I will get the cost of all my neighbouring nodes and go to the nodes which have the leasts cost.
 
 ### Samaritan Strategy
 

@@ -37,7 +37,7 @@ def battlestar(board, start, target):
                                    new_board))
     return (None, None)
 
-def a_star(board, start, target, snake):
+def a_star(board, start, target, snake, cost_limit=99999):
     """
     A pathfinding algorithm similar to djiskta's algorithm that find's the
     shortest path from start to target with the lowest cost (least dangerous)
@@ -50,8 +50,8 @@ def a_star(board, start, target, snake):
     processed = set()
     while p_q:
         path_cost, path, prev_heuristic, foods_in_path = heappop(p_q)
-        # if target == board.other_snakes[-1].get_tail():
-        #     print path_cost, path, foods_in_path`
+        if path_cost > cost_limit:
+            continue
         curr_node = path[-1]
         processed.add(curr_node)
         if curr_node == target:
@@ -85,7 +85,7 @@ in the future"""
 #     while to_be_processed:
 #         curr_node, length_of_path = to_be_processed.pop()
 #         processed.add(curr_node)
-#         neighbours = board.get_simple_neighbours(curr_node)
+#         neighbours = board.get_simplest_neighbours(curr_node)
 #         for neighbour in neighbours:
 #             if neighbour not in processed:
 #                 to_be_processed.append((neighbour, length_of_path+1))
@@ -117,7 +117,7 @@ def bfs(board, start, target, snake):
     while queue:
         length_of_path, curr_node, foods_in_path = queue.popleft()
         if (curr_node == target
-            or target in board.get_simple_neighbours(curr_node)):
+            or target in board.get_simplest_neighbours(curr_node)):
             return True
         neighbours = board.get_valid_neighbours(curr_node, snake,
                                                 length_of_path+1,

@@ -58,44 +58,100 @@ def go_to_least_dense_region(board):
     This is used by our snake to find a path to the least dense region on the
     board.
     """
-    grid = [[-6] + ([-3] * (board.width - 2)) + [-6]]
+    grid = [[0] + ([0] * (board.width - 2)) + [0]]
     for x in range((board.height-2)):
-        grid.append([-3] + ([0] * (board.width - 2)) + [-3])
-    grid.append([-6] + ([-3] * (board.width - 2)) + [-6])
+        grid.append([0] + ([0] * (board.width - 2)) + [0])
+    grid.append([0] + ([0] * (board.width - 2)) + [0])
     safest_nodes = [(-9999, (0,0))]
+    for row in grid:
+        for point in row:
+            print(point, end=" ")
+        print()
+    print()
     for snake in board.other_snakes:
-        x = 1 if snake.length < board.my_snake.length else 2
-        queue = deque([(0, snake.get_head(), (1 if snake.get_head() in board.foods else 0))])
+        x = 1
+        queue = deque([(0, snake.get_head())])
         processed = set([snake.get_head()])
-        val = 0
         while queue:
-            length_of_path, curr_node, foods_in_path = queue.popleft()
+            length_of_path, curr_node = queue.popleft()
             x_node, y_node = curr_node
-            grid[y_node][x_node] = val
-            if val > safest_nodes[0]:
-                safest_nodes = [(val, curr_node)]
-            elif val == safest_nodes[0]:
-                safest_nodes.append((val, curr_node))
-            val += x
-            neighbours = board.get_valid_neighbours(curr_node, snake,
-                                                    length_of_path+1,
-                                                    foods_in_path)
+            val = length_of_path * x
+            grid[y_node][x_node] += val
+            if grid[y_node][x_node] > safest_nodes[0][0]:
+                safest_nodes = [(grid[y_node][x_node], curr_node)]
+            elif grid[y_node][x_node] == safest_nodes[0]:
+                safest_nodes.append((grid[y_node][x_node], curr_node))
+            neighbours = board.get_simple_neighbours(curr_node)
             for neighbour in neighbours:
                 if not neighbour in processed:
                     processed.add(neighbour)
-                    queue.append((length_of_path+1, neighbour,
-                                (1 + foods_in_path if neighbour in board.foods
-                                                    else foods_in_path)))
+                    queue.append((length_of_path+1, neighbour))
+    for row in grid:
+        for point in row:
+            print(point, end=" ")
+        print()
+    print()
+
+    print(safest_nodes)
     for safety, node in safest_nodes:
+        print(node)
         cost, path = a_star(board, board.my_snake.get_head(), node,
                             board.my_snake)
-        if cost:
+        if cost and can_go_to_tail_after_moves(board, path[1:]):
             return ("Going to least dense region", translate(
                                         board.my_snake.get_head(), path[1]))
+
     return (None, None)
 
+def get_safest_move(board):
+    neighbours = board.get_valid_neighbours(board.my_snake.get_head(),
+                                            board.my_snake)
+    min_node = (99999999, None)
+    for neighbour in neighbours:
+        food = 1 if neighbour in board.foods else 0
+        cost = board.get_cost(neighbour, board.my_snake, 1, food)
+        if cost < min_node[0]:
+            min_node = (cost, neighbour)
+    if min_node[1] is None:
+        return (None, None)
+    return ("Going to safest node", translate(board.my_snake.get_head(),
+                                              min_node[1]))
 
 
+
+def find_path_to_food(board):
+    """Go to food that's furthest away from everyone but also make sure that
+    no one can get to it before me.
+    """
+    cost_and_path_to_all_foods = []
+    for food in board.foods:
+        maximum = -99999
+        for snake in board.other_snakes:
+            diff = (get_manhattan_distance(board.my_snake.get_head(), food) -
+                    get_manhattan_distance(snake.get_head(), food))
+            if diff > maximum:
+                maximum = diff
+        heappush(cost_and_path_to_all_foods, (maximum, food))
+    while cost_and_path_to_all_foods:
+        distance_to_food, food = heappop(cost_and_path_to_all_foods)
+        food_cost, food_path = a_star(board, board.my_snake.get_head(),
+                                      food, board.my_snake)
+        if food_cost == None:
+            continue
+        actual_distance_to_food = len(food_path) - 1
+        unsafe = False
+        for snake in board.other_snakes:
+            distance, path = a_star(board, snake.get_head(), food, snake)
+            if distance == None:
+                continue
+            if (snake.length > board.my_snake.length and
+                distance < actual_distance_to_food):
+                unsafe = True
+        if unsafe or not can_go_to_tail_after_moves(board, food_path[1:]):
+            continue
+        return ("Going to food", translate(board.my_snake.get_head(),
+                                           food_path[1]))
+    return (None, None)
 
 
 #### MISC ALGORITHMS #####

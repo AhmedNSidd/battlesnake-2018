@@ -24,9 +24,10 @@ class Board(object):
         self.other_snakes = [self._parse_snake_object(snake, 1)
                              for snake in data["board"]["snakes"]
                              if self.my_snake.id != snake["id"]]
-        if DEBUG:
-            for snake in self.other_snakes:
-                print(snake)
+        self.bad_moves = []
+        # if DEBUG:
+        #     for snake in self.other_snakes:
+        #         print(snake)
         self._mark_grid()
         if DEBUG:
             self.print_grid()
@@ -115,6 +116,19 @@ class Board(object):
         valid or not.
         """
         xcoord, ycoord = node
+        neighbours = [
+            (xcoord + 1, ycoord), (xcoord - 1, ycoord),
+            (xcoord, ycoord + 1), (xcoord, ycoord - 1)
+            ]
+        return [(x, y) for x, y in neighbours
+                if -1 < x < self.width and -1 < y < self.height]
+
+    def get_simplest_neighbours(self, node):
+        """
+        Return a list of neighbours of a node regardless of whether they are
+        valid or not.
+        """
+        xcoord, ycoord = node
         return [
             (xcoord + 1, ycoord), (xcoord - 1, ycoord),
             (xcoord, ycoord + 1), (xcoord, ycoord - 1)
@@ -186,44 +200,67 @@ class Board(object):
         """
         xcoord, ycoord = node
         cost = 1
-        # for snake in self.get_all_snakes():
-        #     if snake != my_snake:
-        #         if snake.length >= my_snake.length:
-        #             enemy_neighbours = self.get_valid_neighbours(snake.get_head(),
-        #                                                    snake)
-        #             for x, y in enemy_neighbours:
-        #                 trajectory = translate(snake.get_head(), (x, y))
-        #                 if (trajectory == "down" and (node == (x-1, y+1) or
-        #                     node == (x+1, y+1))):
-        #                     if snake.length > my_snake.length:
-        #                         cost += 3
-        #                     else:
-        #                         cost += 1
-        #                 elif (trajectory == "up" and (node == (x-1, y-1) or
-        #                     node == (x+1, y-1))):
-        #                     if snake.length > my_snake.length:
-        #                         cost += 3
-        #                     else:
-        #                         cost += 1
-        #                 elif (trajectory == "left" and (node == (x-1, y-1) or
-        #                     node == (x-1, y+1))):
-        #                     if snake.length > my_snake.length:
-        #                         cost += 3
-        #                     else:
-        #                         cost += 1
-        #                 elif (trajectory == "right" and (node == (x+1, y-1) or
-        #                     node == (x+1, y+1))):
-        #                     if snake.length > my_snake.length:
-        #                         cost += 3
-        #                     else:
-        #                         cost += 1
-        # valid_neighbours = self.get_valid_neighbours(node, my_snake, distance_to_node,
-        #                                        foods_in_path)
-        # for snake in self.other_snakes:
-        #     if (snake.get_head() in valid_neighbours
-        #         and snake.length > my_snake.length):
-        #         cost += 6
-        # if (xcoord == (self.width-1) or ycoord == (self.height-1) or xcoord == 0
-        #     or ycoord == 0): # node is on the edges
-        #     cost += 1
+        if (distance_to_node == 1
+            and translate(my_snake.get_head(), node) in self.bad_moves):
+            cost += 99999
+        for snake in self.get_all_snakes():
+            if snake != my_snake:
+                if snake.length >= my_snake.length:
+                    enemy_neighbours = self.get_valid_neighbours(snake.get_head(),
+                                                           snake)
+                    if node in enemy_neighbours:
+                            cost += 5
+                    for x, y in enemy_neighbours:
+                        trajectory = translate(snake.get_head(), (x, y))
+                        if (trajectory == "down" and (node == (x-1, y+1) or
+                            node == (x+1, y+1))):
+                            if snake.length > my_snake.length:
+                                cost += 3
+                            else:
+                                cost += 1
+                        elif (trajectory == "up" and (node == (x-1, y-1) or
+                            node == (x+1, y-1))):
+                            if snake.length > my_snake.length:
+                                cost += 3
+                            else:
+                                cost += 1
+                        elif (trajectory == "left" and (node == (x-1, y-1) or
+                            node == (x-1, y+1))):
+                            if snake.length > my_snake.length:
+                                cost += 3
+                            else:
+                                cost += 1
+                        elif (trajectory == "right" and (node == (x+1, y-1) or
+                            node == (x+1, y+1))):
+                            if snake.length > my_snake.length:
+                                cost += 3
+                            else:
+                                cost += 1
+        valid_neighbours = self.get_valid_neighbours(node, my_snake, distance_to_node,
+                                               foods_in_path)
+        for snake in self.other_snakes:
+            if (snake.get_head() in valid_neighbours
+                and snake.length > my_snake.length):
+                cost += 6
+        if (xcoord == (self.width-1) or ycoord == (self.height-1) or xcoord == 0
+            or ycoord == 0): # node is on the edges
+            cost += 1
         return cost
+
+    def is_valid_move(self, move, distance=1, start=None):
+        '''Tells us if taking a certain move with my snakes is valid.
+        '''
+        if start == None:
+            start = self.my_snake.get_head()
+        xcoord, ycoord = start
+        valid_coordinates = self.get_valid_neighbours((xcoord, ycoord),
+                                                      self.my_snake, distance)
+        if move == 'up':
+            return (xcoord, ycoord-1) in valid_coordinates
+        elif move == 'down':
+            return (xcoord, ycoord+1) in valid_coordinates
+        elif move == 'left':
+            return (xcoord-1, ycoord) in valid_coordinates
+        elif move == 'right':
+            return (xcoord+1, ycoord) in valid_coordinates
+        return False
