@@ -453,14 +453,14 @@ class ParanoiaStrategy():
         the_machine = board.other_snakes[-1]
         objective, move, enemy_id = cornering_enemies(board)
         if enemy_id == the_machine.id:
-            return (objective, move, enemy_id)
+            return ("Corner", move, enemy_id)
         objective, move, enemy_id = trapping_enemies(board)
         if enemy_id == the_machine.id:
-            return (objective, move, enemy_id)
+            return ("Trap", move, enemy_id)
         objective, move, enemy_id = walling_enemies(board)
         if enemy_id == the_machine.id:
-            return (objective, move, enemy_id)
+            return ("Wall", move, enemy_id)
         if (a_star(board, the_machine.get_head(), the_machine.get_tail(),
             the_machine) == (None, None)):
-            return ('Walling off', 'right', the_machine.id)
+            return ('Tail', 'right', the_machine.id)
         return (None, None, None)

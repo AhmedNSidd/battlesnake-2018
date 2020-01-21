@@ -17,6 +17,7 @@ class Controller():
                 objective, move = get_safest_move(board)
                 return (objective, move)
             e_objective, e_move, e_id = get_best_enemy_attack(board, move)
+            print("e_objective {} emove {}".format(e_objective, e_move))
             if e_objective == None:
                 return (objective, move)
             board.bad_moves.append(move)
@@ -53,9 +54,8 @@ class BigSnakeStrategy():
             objective, move = find_path_to_my_tail(board)
             return (objective, move)
         else:
-            if board.my_snake.health <= 30:
-                objective, move = find_path_to_food(board)
-                if objective is not None:
-                    return (objective, move)
+            objective, move = find_path_to_food(board)
+            if objective is not None:
+                return (objective, move)
             objective, move = get_safest_move(board)
             return (objective, move)
