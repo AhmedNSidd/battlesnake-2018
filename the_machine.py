@@ -43,7 +43,7 @@ def move():
     """
     data = bottle.request.json
     # Comment the line below for 2019 game server, uncomment for 2018.
-    data = convert_2018_api_to_2019(data)
+    # data = convert_2018_api_to_2019(data)
     board = Board(data)
     start = time()
     objective, move = Controller.get_action(board)
