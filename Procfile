@@ -1,1 +1,1 @@
-web: python samaritan.py
+web: python the_machine.py
