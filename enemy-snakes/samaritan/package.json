@@ -1,0 +1,19 @@
+{
+  "name": "battlesnake-2018",
+  "version": "0.0.1",
+  "description": "My first battlesnake",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JeSuisAhmedN/battlesnake-2018.git"
+  },
+  "author": "Ahmed Siddiqui",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JeSuisAhmedN/battlesnake-2018/issues"
+  },
+  "homepage": "https://github.com/JeSuisAhmedN/battlesnake-2018#readme"
+}

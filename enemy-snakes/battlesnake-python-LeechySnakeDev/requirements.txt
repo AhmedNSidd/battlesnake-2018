@@ -1,0 +1,4 @@
+bottle==0.12.13
+gevent==1.2.2
+greenlet==0.4.13
+gunicorn==19.7.1
